@@ -8,8 +8,8 @@
 const CONFIG = {
   calLink: "REPLACE-ME/15-min-intro-call",      // Cal.com event link
   appsScriptUrl: "REPLACE-ME-APPS-SCRIPT-URL",  // Sheets/Apps Script endpoint
-  demoUrl: "REPLACE-ME-VELORA-DEMO-URL",        // Velora live demo
 };
+const VELORA_DEMO_URL = "https://velora.splendessa.com";
 
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 document.documentElement.classList.add("js");
@@ -225,8 +225,11 @@ if (reducedMotion) {
   });
 })();
 
-/* Demo link target (03B CTA). */
+/* Demo link target (03B CTA) — opens the live Velora demo in a new tab. */
 (function initDemoLink() {
   const demo = document.getElementById("demo-link");
-  if (demo && !CONFIG.demoUrl.startsWith("REPLACE")) demo.href = CONFIG.demoUrl;
+  if (!demo) return;
+  demo.href = VELORA_DEMO_URL;
+  demo.target = "_blank";
+  demo.rel = "noopener";
 })();
