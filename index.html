@@ -179,8 +179,12 @@
       <p class="section-sub" data-reveal>Or keep reading DMs at 11 AM.</p>
 
       <p class="final-cta-row" data-reveal>
-        <!-- Rose button = allowed rose instance 3 of 3. The only rose CTA on the page. -->
-        <button class="cta cta-rose" id="book-call" type="button">Secure the 10 PM client&nbsp;→</button>
+        <!-- Rose button = allowed rose instance 3 of 3. The only rose CTA on the page.
+             data-cal-link / data-cal-config are read by Cal.com's embed script once
+             loaded (js/main.js initCal) — no visual effect on their own. -->
+        <button class="cta cta-rose" id="book-call" type="button"
+                data-cal-link="splendessa/15-min-intro-call"
+                data-cal-config='{"theme":"dark"}'>Secure the 10 PM client&nbsp;→</button>
       </p>
 
       <p class="secondary-row" data-reveal>
@@ -191,14 +195,32 @@
       <form class="lead-form" id="lead-form" novalidate>
         <div class="lead-fields">
           <label>Clinic name
-            <input type="text" name="clinic" autocomplete="organization" required>
+            <input type="text" id="clinic-input" name="clinic" autocomplete="organization"
+                   minlength="2" required aria-describedby="clinic-error">
           </label>
+          <p class="field-error" id="clinic-error" aria-live="polite"></p>
+
           <label>Phone / WhatsApp
-            <input type="tel" name="phone" autocomplete="tel" required>
+            <input type="tel" id="phone-input" name="phone" autocomplete="tel"
+                   required aria-describedby="phone-error">
           </label>
+          <p class="field-error" id="phone-error" aria-live="polite"></p>
+
+          <label>Email
+            <input type="email" id="email-input" name="email" autocomplete="email"
+                   required aria-describedby="email-error">
+          </label>
+          <p class="field-error" id="email-error" aria-live="polite"></p>
+
+          <!-- Honeypot: invisible to real visitors, catches bots that auto-fill every field.
+               Hidden by position, not display:none, so it still exists for a screen reader
+               to correctly skip via aria-hidden rather than silently vanish. -->
+          <input type="text" name="website" id="website" class="honeypot"
+                 tabindex="-1" autocomplete="off" aria-hidden="true">
         </div>
-        <!-- Submit label reuses the link's locked copy; flagged for Nick's sign-off. -->
+
         <button class="cta cta-outline" type="submit">Leave your details&nbsp;→</button>
+        <p class="form-error" id="form-error" role="alert" hidden></p>
         <p class="form-confirm" hidden>✓ Received.</p>
       </form>
 

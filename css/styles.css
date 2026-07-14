@@ -34,6 +34,12 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* Several elements below (.lead-fields, .cta) set their own `display`, which
+   has equal specificity to the browser's default [hidden]{display:none} and
+   an author rule wins that tie — so without this, hidden="" stops hiding
+   anything the moment a sibling rule also declares display. Force it back. */
+[hidden] { display: none !important; }
+
 html {
   -webkit-text-size-adjust: 100%;
 }
@@ -449,7 +455,43 @@ body[data-theme="light"] .logo { color: var(--fg); }
   outline: none;
   border-bottom-color: var(--fg);
 }
+.lead-fields input[aria-invalid="true"] {
+  border-bottom-color: var(--fg);
+  border-bottom-width: 2px;
+}
+.field-error {
+  font-size: 13px;
+  font-weight: 500;
+  margin-top: -10px;
+}
+.field-error:empty { display: none; }
+
+/* Off-screen, not display:none, so a screen reader (guided by aria-hidden) and
+   real focus/tab order both correctly skip it — only a scripted auto-filler finds it. */
+.honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.form-error { font-size: 14px; font-weight: 500; }
 .form-confirm { font-size: 16px; font-weight: 500; }
+
+/* intl-tel-input — theme its CSS variables to this section's permanent dark charcoal
+   (Section 04 is always data-zone="dark", so these values never need to flip). */
+.lead-form .iti {
+  --iti-country-selector-bg: #232227;
+  --iti-border-color: var(--grey-on-dark);
+  --iti-icon-color: var(--grey-on-dark);
+  --iti-hover-color: rgba(255, 255, 255, 0.08);
+  display: block;
+}
+.iti__country-list {
+  background: #232227;
+  color: var(--white);
+}
 
 /* ---------- Scroll reveals: fade + 14px rise, one motion idea ---------- */
 

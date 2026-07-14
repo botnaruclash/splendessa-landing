@@ -4,12 +4,9 @@
 
 "use strict";
 
-/* ---- Nick: swap these before launch ---- */
-const CONFIG = {
-  calLink: "REPLACE-ME/15-min-intro-call",      // Cal.com event link
-  appsScriptUrl: "REPLACE-ME-APPS-SCRIPT-URL",  // Sheets/Apps Script endpoint
-};
 const VELORA_DEMO_URL = "https://velora.splendessa.com";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyzWdawEB8ktbkwapq0JD-y2JJwDqMZe9BapiPV8vWfEGnYg-3VYq_PWIgR2M7jKiGEDw/exec";
+const ITI_VERSION = "29.1.2"; // intl-tel-input CDN build, lazy-loaded near Section 04
 
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 document.documentElement.classList.add("js");
@@ -154,6 +151,13 @@ if (reducedMotion) {
 /* =========================================================
    Final CTA — Cal.com facade. Nothing loads until the click,
    protecting the sub-second initial load.
+
+   Cal("init") makes the embed script bind its own delegated click
+   listener to every element carrying data-cal-link, so from the
+   second click onward Cal.com handles the button itself — no code
+   of ours involved. But that listener isn't registered yet at the
+   moment of the very first click (the one that triggers the load),
+   so we open the modal explicitly, once, for that first click only.
    ========================================================= */
 (function initCal() {
   const btn = document.getElementById("book-call");
@@ -190,38 +194,148 @@ if (reducedMotion) {
     });
   }
 
-  btn.addEventListener("click", () => {
+  btn.addEventListener("click", function openOnFirstClick() {
     loadCal().then(() => {
-      window.Cal("modal", { calLink: CONFIG.calLink });
+      window.Cal("modal", {
+        calLink: btn.dataset.calLink,
+        config: JSON.parse(btn.dataset.calConfig || "{}"),
+      });
     });
-  });
+  }, { once: true });
 })();
 
 /* =========================================================
-   Secondary path — 2-field form → Apps Script → Telegram.
+   Secondary path — clinic + phone + email → Apps Script.
+   Phone gets a country picker + validation via intl-tel-input,
+   lazy-loaded only once Section 04 nears the viewport (never on
+   page load). A hidden honeypot field traps naive bots.
    ========================================================= */
-(function initForm() {
-  const link = document.getElementById("show-form");
+(function initLeadForm() {
+  const section = document.getElementById("ultimatum");
+  const showFormLink = document.getElementById("show-form");
   const form = document.getElementById("lead-form");
-  if (!link || !form) return;
+  if (!section || !showFormLink || !form) return;
 
-  link.addEventListener("click", (e) => {
+  const clinicInput = document.getElementById("clinic-input");
+  const phoneInput = document.getElementById("phone-input");
+  const emailInput = document.getElementById("email-input");
+  const honeypot = document.getElementById("website");
+  const formError = document.getElementById("form-error");
+
+  let iti = null;
+  let itiReady = null;
+
+  function loadPhoneWidget() {
+    if (itiReady) return itiReady;
+    itiReady = new Promise((resolve) => {
+      const cssLink = document.createElement("link");
+      cssLink.rel = "stylesheet";
+      cssLink.href = `https://cdn.jsdelivr.net/npm/intl-tel-input@${ITI_VERSION}/dist/css/intlTelInput.css`;
+      document.head.appendChild(cssLink);
+
+      const script = document.createElement("script");
+      script.src = `https://cdn.jsdelivr.net/npm/intl-tel-input@${ITI_VERSION}/dist/js/intlTelInput.min.js`;
+      script.onload = () => {
+        iti = window.intlTelInput(phoneInput, {
+          initialCountry: "us",
+          loadUtils: () => import(`https://cdn.jsdelivr.net/npm/intl-tel-input@${ITI_VERSION}/dist/js/utils.js`),
+        });
+        resolve();
+      };
+      document.head.appendChild(script);
+    });
+    return itiReady;
+  }
+
+  // "Nears the viewport" — start loading well before Section 04 is actually visible.
+  const nearViewport = new IntersectionObserver(
+    (entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        loadPhoneWidget();
+        nearViewport.disconnect();
+      }
+    },
+    { rootMargin: "600px 0px" }
+  );
+  nearViewport.observe(section);
+
+  showFormLink.addEventListener("click", (e) => {
     e.preventDefault();
+    loadPhoneWidget(); // safety net if the observer above hasn't fired yet
     form.classList.add("open");
-    form.querySelector("input").focus();
+    clinicInput.focus();
   });
 
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    if (!form.reportValidity()) return;
-    const data = new FormData(form);
-    // no-cors: Apps Script web-app endpoints don't return CORS headers.
-    fetch(CONFIG.appsScriptUrl, { method: "POST", body: data, mode: "no-cors" })
-      .catch((err) => console.warn("Lead form submit failed:", err));
-    // Instant on-screen confirmation (spec).
+  function setFieldError(input, errorId, message) {
+    document.getElementById(errorId).textContent = message;
+    input.setAttribute("aria-invalid", message ? "true" : "false");
+  }
+
+  function validate() {
+    let valid = true;
+
+    if (clinicInput.value.trim().length < 2) {
+      setFieldError(clinicInput, "clinic-error", "Enter your clinic name (2+ characters).");
+      valid = false;
+    } else {
+      setFieldError(clinicInput, "clinic-error", "");
+    }
+
+    if (!iti || !iti.isValidNumber()) {
+      setFieldError(phoneInput, "phone-error", "Enter a valid phone number.");
+      valid = false;
+    } else {
+      setFieldError(phoneInput, "phone-error", "");
+    }
+
+    if (!emailInput.checkValidity() || !emailInput.value.trim()) {
+      setFieldError(emailInput, "email-error", "Enter a valid email address.");
+      valid = false;
+    } else {
+      setFieldError(emailInput, "email-error", "");
+    }
+
+    return valid;
+  }
+
+  function showSuccess() {
     form.querySelector(".lead-fields").hidden = true;
     form.querySelector('button[type="submit"]').hidden = true;
     form.querySelector(".form-confirm").hidden = false;
+    form.reset();
+    if (iti) iti.setNumber("");
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    formError.hidden = true;
+
+    // Spam trap: real visitors never see or fill this field. Pretend success,
+    // send nothing, so scripted fillers get no signal that they were caught.
+    if (honeypot.value) {
+      showSuccess();
+      return;
+    }
+
+    await loadPhoneWidget(); // guards a submit that beats the lazy-load on a slow connection
+    if (!validate()) return;
+
+    const payload = {
+      clinic: clinicInput.value.trim(),
+      phone: iti.getNumber(),
+      email: emailInput.value.trim(),
+    };
+
+    try {
+      // Body is a JSON string with no explicit Content-Type header, so the browser
+      // defaults to text/plain — the one MIME type no-cors allows without a
+      // preflight. Apps Script's doPost reads it via JSON.parse(e.postData.contents).
+      await fetch(APPS_SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) });
+      showSuccess();
+    } catch (err) {
+      formError.textContent = "Something went wrong — please try again.";
+      formError.hidden = false;
+    }
   });
 })();
 
