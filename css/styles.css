@@ -98,9 +98,7 @@ h2 {
 }
 .micro,
 .counter-source,
-.floor,
-.dm-receipt,
-.velora-time {
+.floor {
   font-size: 13px;
   color: var(--muted);
 }
@@ -201,94 +199,27 @@ body[data-theme="light"] .logo { color: var(--fg); }
 
 /* ---------- 02 / The Diagnosis ---------- */
 
-.phones {
+.diagnosis-figure { width: 100%; }
+
+.diagnosis-img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.diagnosis-caption {
+  margin-top: 28px; /* same caption offset as the old .phone-caption */
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: clamp(40px, 7vw, 120px);
-  align-items: start;
-  justify-items: center;
-}
-.phone-block { max-width: 320px; }
-
-.phone {
-  width: min(280px, 72vw);
-  aspect-ratio: 9 / 18.5;
-  border-radius: 40px;
-  padding: 28px 20px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
+  gap: clamp(40px, 7vw, 120px); /* same column gap as the old .phones grid */
   text-align: left;
-  /* Subtle depth is the one allowed shadow (phone mockups only). */
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
 }
-
-.phone-dm {
-  background: #232227; /* charcoal, one step lifted — surface, not a text grey */
-  opacity: .82;
-}
-.dm-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-.dm-avatar {
-  width: 28px; height: 28px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.14);
-}
-.dm-name { font-size: 13px; font-weight: 500; color: var(--white); opacity: .85; }
-.dm-thread {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  align-items: flex-end;
-  gap: 8px;
-  padding-bottom: 8px;
-}
-.dm-bubble {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--white);
-  font-size: 13px;
-  line-height: 1.4;
-  padding: 10px 14px;
-  border-radius: 18px 18px 4px 18px;
-  max-width: 85%;
-}
-
-.phone-velora {
-  background: var(--white);
-  color: var(--charcoal);
-  /* Allowed rose 2/3 — the glow. The only light source on the page's dark half. */
-  box-shadow:
-    0 24px 60px rgba(0, 0, 0, 0.35),
-    0 0 90px 8px rgba(181, 83, 109, 0.38);
-  justify-content: center;
-  gap: 24px;
-}
-.velora-mark {
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  font-size: 14px;
-  text-align: center;
-}
-.velora-booking { text-align: center; display: grid; gap: 8px; }
-.velora-service { font-weight: 500; font-size: 16px; }
-.velora-slot { font-size: 14px; }
-.velora-confirmed { font-weight: 500; font-size: 14px; }
-.velora-time { color: var(--grey-on-light); }
 
 .phone-caption {
-  margin-top: 28px;
   font-size: 15px;
   line-height: 1.55;
-  text-align: center;
 }
-.phone-block .micro { margin-top: 12px; text-align: center; }
+.diagnosis-col .micro { margin-top: 12px; }
 
 /* ---------- Transition / 07:42 ---------- */
 
@@ -464,7 +395,7 @@ html.js [data-reveal].in {
 /* ---------- Responsive ---------- */
 
 @media (max-width: 768px) {
-  .phones { grid-template-columns: 1fr; gap: 72px; }
+  .diagnosis-caption { grid-template-columns: 1fr; gap: 72px; }
   .standard-body { grid-template-columns: 1fr; text-align: center; }
   .callouts { justify-items: center; }
 }
