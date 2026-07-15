@@ -322,7 +322,7 @@ if (reducedMotion) {
     if (!validate()) return;
 
     const payload = {
-      clinic: clinicInput.value.trim(),
+      clinicName: clinicInput.value.trim(),
       phone: iti.getNumber(),
       email: emailInput.value.trim(),
     };
@@ -331,7 +331,6 @@ if (reducedMotion) {
       // Content-Type is explicitly text/plain — one of the three MIME types
       // no-cors allows without triggering a preflight. Apps Script's doPost
       // reads the JSON via JSON.parse(e.postData.contents).
-      console.log('Submitting payload:', payload);
       await fetch(APPS_SCRIPT_URL, {
         method: "POST",
         mode: "no-cors",
