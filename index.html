@@ -49,31 +49,63 @@
       <p class="hero-cta-row"><a class="cta cta-ghost" href="#standard">See the 10 PM Standard&nbsp;↓</a></p>
     </section>
 
-    <!-- ============ [ 02 / THE DIAGNOSIS ] — dark ============ -->
+    <!-- ============ [ 02 / THE DIAGNOSIS ] — dark, two phones ============ -->
     <section class="diagnosis" id="diagnosis" data-zone="dark">
-      <figure class="diagnosis-figure" data-reveal>
-        <picture>
-          <!-- 769px mirrors the .phones breakpoint below (max-width: 768px) already
-               established for this section — no new breakpoint introduced. -->
-          <source media="(min-width: 769px)" srcset="assets/img/diagnosis-desktop.webp">
-          <img class="diagnosis-img" src="assets/img/diagnosis-mobile.webp"
-               alt="Split comparison: an unanswered Instagram DM next to a website booking confirmation."
-               width="1400" height="1400" loading="lazy">
-        </picture>
+      <div class="phones">
 
-        <figcaption class="diagnosis-caption">
-          <div class="diagnosis-col">
+        <figure class="phone-unit" data-reveal>
+          <!-- Layered on purpose: glow / frame / screen are separate elements so a
+               future animation pass can move each independently. -->
+          <div class="phone-stage">
+            <div class="phone phone-dm" role="img"
+                 aria-label="Instagram direct message sent at night, seen 13 hours later, never answered">
+              <div class="phone-screen screen-dm">
+                <p class="screen-status">11:20</p>
+                <div class="dm-header">
+                  <span class="dm-avatar" aria-hidden="true"></span>
+                  <span class="dm-name">yourclinic</span>
+                </div>
+                <div class="dm-thread">
+                  <p class="dm-bubble">Hi! How much is laser hair removal?</p>
+                  <p class="dm-receipt">Seen 13h ago</p>
+                </div>
+                <p class="dm-input">Message…</p>
+              </div>
+            </div>
+          </div>
+          <figcaption class="phone-caption-block">
             <p class="phone-caption">"DM for info."<br>
             Sent 22:15. Seen 11:20 — the next day.<br>
             She'd booked elsewhere by 22:26.</p>
             <p class="micro">No record. No alert. She never existed.</p>
+          </figcaption>
+        </figure>
+
+        <figure class="phone-unit" data-reveal>
+          <div class="phone-stage">
+            <!-- Rose glow = allowed rose instance 2 of 3. The only light source on the dark half. -->
+            <span class="phone-glow" aria-hidden="true"></span>
+            <div class="phone phone-velora" role="img" aria-label="Velora booking confirmation at 22:26">
+              <div class="phone-screen screen-velora">
+                <p class="screen-status">22:26</p>
+                <p class="velora-url">velora.splendessa.com</p>
+                <div class="velora-booking">
+                  <p class="velora-mark">Velora</p>
+                  <p class="velora-service">Laser Hair Removal</p>
+                  <p class="velora-slot">Tomorrow, 2:00 PM</p>
+                  <p class="velora-confirmed">Booking confirmed ✓</p>
+                  <p class="velora-time">22:26</p>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="diagnosis-col">
+          <figcaption class="phone-caption-block">
             <p class="phone-caption">Booked at 22:26. Confirmed instantly.<br>
             You woke up to a filled chair.</p>
-          </div>
-        </figcaption>
-      </figure>
+          </figcaption>
+        </figure>
+
+      </div>
     </section>
 
     <!-- ============ [ TRANSITION ] — full viewport, one line ============ -->

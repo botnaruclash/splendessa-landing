@@ -198,47 +198,177 @@ body[data-theme="light"] .logo { color: var(--fg); }
 }
 .counter-source { margin-top: 6px; }
 
-/* ---------- 02 / The Diagnosis ---------- */
+/* ---------- 02 / The Diagnosis: two layered HTML/CSS phones ---------- */
 
-/* Full-bleed breakout: the figure's containing block (.diagnosis section's content
-   box) is already inset by --section-px on each side, and by the main>section>*
-   max-width:1100px rule. "100% + 2 * --section-px" cancels that inset exactly —
-   using the section's own padding var (not 100vw) so it's correct regardless of
-   scrollbar width and needs no per-breakpoint override, since --section-px is
-   constant at every viewport size already. */
-.diagnosis-figure {
-  width: calc(100% + 2 * var(--section-px));
-  max-width: calc(100% + 2 * var(--section-px));
-  margin-left: calc(-1 * var(--section-px));
-  margin-right: calc(-1 * var(--section-px));
-}
-
-.diagnosis-img {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-.diagnosis-caption {
-  /* The image above is full-bleed; pull the caption back into the normal
-     content column (same 1100px cap + gutter as every other section). */
-  max-width: 1100px;
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: var(--section-px);
-  padding-right: var(--section-px);
-  margin-top: 28px; /* same caption offset as the old .phone-caption */
+.phones {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: clamp(40px, 7vw, 120px); /* same column gap as the old .phones grid */
-  text-align: left;
+  gap: clamp(40px, 7vw, 120px);
+  align-items: start;
+  justify-items: center;
 }
 
+/* One unit = phone + its own caption, so the caption is always physically
+   under its phone (column on desktop, stacked pair on mobile). */
+.phone-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 320px;
+}
+
+/* Stage = the layered stack. Glow and frame are separate positioned children
+   so a later animation pass can move each independently. */
+.phone-stage {
+  position: relative;
+  width: min(280px, 72vw);
+}
+
+/* --- Glow layer (bottom): rose, right phone only, and the dominant light on the
+   dark half. Diffused through layered rose box-shadows (soft depth, several radii)
+   over a radial core — not one flat patch. --- */
+.phone-glow {
+  position: absolute;
+  inset: 3%;
+  z-index: 0;
+  border-radius: 42px;
+  background: radial-gradient(52% 50% at 50% 48%, rgba(181, 83, 109, 0.60) 0%,
+    rgba(181, 83, 109, 0.18) 46%, rgba(181, 83, 109, 0) 74%);
+  box-shadow:
+    0 0 46px 4px rgba(181, 83, 109, 0.65),
+    0 0 92px 20px rgba(181, 83, 109, 0.45),
+    0 6px 150px 54px rgba(181, 83, 109, 0.28);
+  pointer-events: none;
+}
+
+/* --- Frame layer (middle): the bezel. A diagonal linear-gradient makes the
+   top-left and bottom-right edges catch light = brushed metal, not a flat border. --- */
+.phone {
+  position: relative;
+  z-index: 1;
+  aspect-ratio: 9 / 19;
+  padding: 9px;
+  border-radius: 46px;
+  background: linear-gradient(135deg,
+    #56565f 0%, #2b2a31 15%, #17161a 48%, #2b2a31 85%, #5d5d68 100%);
+  box-shadow:
+    0 26px 55px rgba(0, 0, 0, 0.5),
+    0 4px 14px rgba(0, 0, 0, 0.4),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+.phone-dm { opacity: 0.92; }
+.phone-velora {
+  /* Rose-tinted metal edge on the glowing phone. */
+  background: linear-gradient(135deg,
+    #d99daf 0%, #7d4b59 14%, #39292f 48%, #7d4b59 86%, #e3a9ba 100%);
+}
+
+/* --- Screen layer (top): real HTML text. A faint top-down sheen reads as glass
+   but never sits over the copy — legibility first. --- */
+.phone-screen {
+  position: relative;
+  height: 100%;
+  border-radius: 38px;
+  overflow: hidden;
+  padding: 20px 15px 15px;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+.phone-screen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(158deg, rgba(255, 255, 255, 0.11) 0%,
+    rgba(255, 255, 255, 0) 20%);
+  pointer-events: none;
+}
+.screen-dm { background: #0e0d11; color: var(--white); }
+.screen-velora { background: #f7f2e9; color: var(--charcoal); }
+
+.screen-status { font-size: 12px; font-weight: 500; margin-bottom: 14px; }
+
+/* DM screen */
+.dm-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+}
+.dm-avatar {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+}
+.dm-name { font-size: 13px; font-weight: 500; opacity: 0.9; }
+.dm-thread {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 14px 0;
+}
+.dm-bubble {
+  background: rgba(255, 255, 255, 0.13);
+  font-size: 13.5px;
+  line-height: 1.4;
+  padding: 9px 13px;
+  border-radius: 16px 16px 4px 16px;
+  max-width: 84%;
+}
+.dm-receipt { font-size: 11px; color: var(--grey-on-dark); }
+.dm-input {
+  font-size: 12.5px;
+  color: var(--grey-on-dark);
+  padding: 9px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Velora screen */
+.velora-url {
+  font-size: 11px;
+  color: var(--grey-on-light);
+  text-align: center;
+  padding: 6px 10px;
+  margin-bottom: 22px;
+  border-radius: 999px;
+  background: rgba(23, 22, 26, 0.05);
+}
+.velora-booking {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  text-align: center;
+  padding-bottom: 22px;
+}
+.velora-mark {
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-size: 21px;
+}
+.velora-service { font-weight: 500; font-size: 14px; }
+.velora-slot { font-size: 13px; margin-top: 6px; }
+.velora-confirmed { font-weight: 700; font-size: 13px; }
+.velora-time { font-size: 12px; color: var(--grey-on-light); }
+
+/* Caption sits directly under its own phone. */
+.phone-caption-block {
+  margin-top: 26px;
+  text-align: center;
+}
 .phone-caption {
   font-size: 15px;
   line-height: 1.55;
 }
-.diagnosis-col .micro { margin-top: 12px; }
+.phone-caption-block .micro { margin-top: 12px; }
 
 /* ---------- Transition / 07:42 ---------- */
 
@@ -414,7 +544,7 @@ html.js [data-reveal].in {
 /* ---------- Responsive ---------- */
 
 @media (max-width: 768px) {
-  .diagnosis-caption { grid-template-columns: 1fr; gap: 72px; }
+  .phones { grid-template-columns: 1fr; gap: 72px; }
   .standard-body { grid-template-columns: 1fr; text-align: center; }
   .callouts { justify-items: center; }
 }
