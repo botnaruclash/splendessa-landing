@@ -30,6 +30,7 @@
   --grey-on-dark: #A6A3AD;
   --grey-on-light: #5F5D66;
   --theme-fade: .7s;
+  --section-px: 24px; /* main>section's horizontal gutter, referenced by full-bleed breakouts */
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -113,7 +114,7 @@ main > section {
   align-items: center;
   text-align: center;
   gap: 2.5rem;
-  padding: clamp(96px, 14vh, 160px) 24px;
+  padding: clamp(96px, 14vh, 160px) var(--section-px);
 }
 main > section > * {
   width: 100%;
@@ -199,7 +200,18 @@ body[data-theme="light"] .logo { color: var(--fg); }
 
 /* ---------- 02 / The Diagnosis ---------- */
 
-.diagnosis-figure { width: 100%; }
+/* Full-bleed breakout: the figure's containing block (.diagnosis section's content
+   box) is already inset by --section-px on each side, and by the main>section>*
+   max-width:1100px rule. "100% + 2 * --section-px" cancels that inset exactly —
+   using the section's own padding var (not 100vw) so it's correct regardless of
+   scrollbar width and needs no per-breakpoint override, since --section-px is
+   constant at every viewport size already. */
+.diagnosis-figure {
+  width: calc(100% + 2 * var(--section-px));
+  max-width: calc(100% + 2 * var(--section-px));
+  margin-left: calc(-1 * var(--section-px));
+  margin-right: calc(-1 * var(--section-px));
+}
 
 .diagnosis-img {
   width: 100%;
@@ -208,6 +220,13 @@ body[data-theme="light"] .logo { color: var(--fg); }
 }
 
 .diagnosis-caption {
+  /* The image above is full-bleed; pull the caption back into the normal
+     content column (same 1100px cap + gutter as every other section). */
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--section-px);
+  padding-right: var(--section-px);
   margin-top: 28px; /* same caption offset as the old .phone-caption */
   display: grid;
   grid-template-columns: 1fr 1fr;
