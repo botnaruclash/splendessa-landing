@@ -182,10 +182,11 @@ body[data-theme="light"] .logo { color: var(--fg); }
 }
 .counter { max-width: 240px; }
 .counter-num {
-  /* ~20% larger than before (clamp(44,6vw,88)); h1 uses 8.5vw desktop, so this
-     6vw->7.2vw stays proportionally smaller at every viewport, not just the
-     two breakpoints checked — see hard constraint note in CLAUDE.md workflow. */
-  font-size: clamp(53px, 7.2vw, 106px);
+  /* Hierarchy fix: target ~2.75x smaller than h1 (h1 is 56/8.5vw/110 desktop),
+     so 2.8vw here keeps the same ~3.04x ratio through the shared vw-driven
+     range, settling at 110/40=2.75x once both sides hit their caps at wide
+     viewports — comfortably clear of the 2-2.5x hard floor at every width. */
+  font-size: clamp(20px, 2.8vw, 40px);
   font-weight: 500;
   letter-spacing: -0.02em;
   line-height: 1;
@@ -605,11 +606,11 @@ html.js [data-reveal].in {
   /* Counters: one compact horizontal row; H1 stays in the first viewport. */
   .counters { gap: 12px; align-items: flex-start; }
   .counter { flex: 1 1 0; min-width: 0; max-width: none; }
-  /* ~17.6% larger than before (34px). Mobile h1 is clamp(40px,12.8vw,56px) — a
-     flat value here (not vw-scaled) needs a safety margin against h1's own
-     narrow-viewport floor, not just against its value at the breakpoints
-     actually screenshotted; 38px keeps a real margin down to ~330px viewport. */
-  .counter-num { font-size: 38px; }
+  /* Hierarchy fix: target ~2.75x smaller than h1. Mobile h1 is clamp(40px,
+     12.8vw,56px); a flat value here needs margin against h1's own floor (40px),
+     not just its value at 390px — 18px holds a ratio >=2.2x even at a
+     hypothetical ~300px viewport, well past any real device this site targets. */
+  .counter-num { font-size: 18px; }
   .counter-desc { font-size: 11px; margin-top: 8px; }
   .counter-source { font-size: 10px; }
   h1 { font-size: clamp(40px, 12.8vw, 56px); letter-spacing: -0.035em; }
