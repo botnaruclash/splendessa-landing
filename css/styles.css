@@ -100,8 +100,7 @@ h2 {
 .counter-source,
 .floor,
 .dm-receipt,
-.velora-time,
-.vv-note, .bv-note {
+.velora-time {
   font-size: 13px;
   color: var(--muted);
 }
@@ -314,9 +313,6 @@ body[data-theme="light"] .logo { color: var(--fg); }
 .pane {
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 .pane-before {
   clip-path: inset(0 calc(100% - var(--split)) 0 0);
@@ -355,53 +351,13 @@ body[data-theme="light"] .logo { color: var(--fg); }
 }
 .compare-caption { font-size: 15px; }
 
-/* --- Placeholder visuals (replace with real assets) --- */
-
-.velora-visual {
+.pane-img {
   width: 100%;
   height: 100%;
-  background: #F7F2E9; /* Velora's own cream — the only colored artifact in daylight */
-  color: var(--charcoal);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
+  display: block;
+  object-fit: cover;
+  object-position: top center;
 }
-.vv-mark {
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  font-size: clamp(18px, 2.4vw, 28px);
-  color: #A98B4F; /* Velora gold — inside the artifact only */
-}
-.vv-line { font-weight: 500; font-size: 15px; }
-.vv-note { color: #8D897F; }
-
-.before-visual {
-  width: 100%;
-  height: 100%;
-  background: #EDECEC;
-  color: #3A3A3A;
-  font-family: "Times New Roman", Times, serif; /* deliberate dated tell, inside the artifact */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  padding: 16px;
-}
-.bv-heading { font-size: 20px; font-style: italic; }
-.bv-tiles {
-  display: grid;
-  grid-template-columns: repeat(3, 72px);
-  gap: 6px;
-}
-.bv-tiles span {
-  height: 48px;
-  background: #C9C7C7;
-}
-.bv-note { font-family: inherit; color: #7C7A7A; }
 
 /* ---------- 03B / The Standard ---------- */
 

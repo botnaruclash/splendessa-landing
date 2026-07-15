@@ -102,26 +102,13 @@
       <h2 data-reveal>Same clinic. Same prices.<br>Different first impression.</h2>
 
       <div class="compare" data-reveal>
-        <!-- AFTER: base layer. PLACEHOLDER — replace inner markup with the real Velora
-             screenshot <img>. Must be the SAME asset reused in 03B below. -->
+        <!-- AFTER: base layer. Same file reused verbatim in 03B below. -->
         <div class="pane pane-after" aria-hidden="true">
-          <div class="velora-visual">
-            <p class="vv-mark">Velora</p>
-            <p class="vv-line">Laser Hair Removal</p>
-            <p class="vv-note">[ placeholder — Velora demo screenshot ]</p>
-          </div>
+          <img class="pane-img" src="assets/img/velora-after.webp" alt="" width="1280" height="690" loading="lazy">
         </div>
-        <!-- BEFORE: top layer, clipped by --split. PLACEHOLDER — replace with Nick's
-             composite. Slightly desaturated by CSS per spec. -->
+        <!-- BEFORE: top layer, clipped by --split. Slightly desaturated by CSS per spec. -->
         <div class="pane pane-before" aria-hidden="true">
-          <div class="before-visual">
-            <p class="bv-heading">Welcome to our website!</p>
-            <div class="bv-tiles">
-              <span></span><span></span><span></span>
-              <span></span><span></span><span></span>
-            </div>
-            <p class="bv-note">[ placeholder — "before" composite ]</p>
-          </div>
+          <img class="pane-img" src="assets/img/before-composite.webp" alt="" width="1280" height="560" loading="lazy">
         </div>
         <div class="compare-handle" role="slider" tabindex="0"
              aria-label="Compare before and after"
@@ -143,11 +130,7 @@
       <div class="standard-body">
         <!-- Same Velora asset as the slider's "after" pane (spec: dissected here). -->
         <div class="velora-locked" data-reveal aria-hidden="true">
-          <div class="velora-visual">
-            <p class="vv-mark">Velora</p>
-            <p class="vv-line">Laser Hair Removal</p>
-            <p class="vv-note">[ placeholder — same Velora asset as slider ]</p>
-          </div>
+          <img class="pane-img" src="assets/img/velora-after.webp" alt="" width="1280" height="690" loading="lazy">
         </div>
 
         <ol class="callouts">
