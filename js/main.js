@@ -328,10 +328,16 @@ if (reducedMotion) {
     };
 
     try {
-      // Body is a JSON string with no explicit Content-Type header, so the browser
-      // defaults to text/plain — the one MIME type no-cors allows without a
-      // preflight. Apps Script's doPost reads it via JSON.parse(e.postData.contents).
-      await fetch(APPS_SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) });
+      // Content-Type is explicitly text/plain — one of the three MIME types
+      // no-cors allows without triggering a preflight. Apps Script's doPost
+      // reads the JSON via JSON.parse(e.postData.contents).
+      console.log('Submitting payload:', payload);
+      await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload),
+      });
       showSuccess();
     } catch (err) {
       formError.textContent = "Something went wrong — please try again.";
