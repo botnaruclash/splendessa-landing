@@ -211,10 +211,10 @@ body[data-theme="light"] .logo { color: var(--fg); }
   gap: clamp(0px, 1vw, 12px);
 }
 
-/* One unit = phone + its own caption, so the caption is always physically
-   under its phone (row on desktop, stacked pair on mobile). Position/rotation
-   below is applied to the whole unit — caption and phone move together, so
-   alignment between them never breaks. */
+/* One unit = phone + its own caption. z-index here orders the two phones front/
+   back; the actual lean/overlap is applied to .phone-stage (the phone) and the
+   caption is nudged separately — so phones tilt and cross while captions stay
+   upright, legible, and each still sits clearly under its own phone. */
 .phone-unit {
   display: flex;
   flex-direction: column;
@@ -223,23 +223,32 @@ body[data-theme="light"] .logo { color: var(--fg); }
   max-width: 320px;
   position: relative;
 }
-/* Overlap + lean, referenced from refs/phone-overlap-composition-ref.png (spatial
-   composition only — proximity, overlap amount, tilt). Right phone leans in front. */
-.phone-unit-left {
-  z-index: 1;
-  transform: translateX(28px) rotate(-3deg);
-}
-.phone-unit-right {
-  z-index: 2;
-  transform: translateX(-28px) translateY(-18px) rotate(3deg);
-}
+.phone-unit-left { z-index: 1; }        /* behind */
+.phone-unit-right { z-index: 2; }       /* raised, in front */
 
-/* Stage = the layered stack. Glow and frame are separate positioned children
-   so a later animation pass can move each independently. */
+/* Stage = the layered stack (glow + frame, separate children for later animation).
+   Overlap + lean per refs/phone-overlap-composition-ref.png (spatial reference only:
+   tilt toward each other, genuine edge overlap, right phone raised & in front). The
+   translateX values (>> the ~1px gap) pull the two phones across each other's edge. */
 .phone-stage {
   position: relative;
   width: min(280px, 72vw);
 }
+.phone-unit-left .phone-stage {
+  transform: rotate(-7deg) translateX(26px);
+  transform-origin: bottom center;
+}
+.phone-unit-right .phone-stage {
+  transform: rotate(7deg) translate(-26px, -34px);
+  transform-origin: bottom center;
+  /* Deepen the drop shadow toward the left so the front phone reads as lifted
+     above the one it overlaps. */
+  filter: drop-shadow(-16px 22px 26px rgba(0, 0, 0, 0.55));
+}
+/* Captions follow their phone's side but by a smaller amount — they stay upright,
+   never collide, and each remains unmistakably under its own phone. */
+.phone-unit-left .phone-caption-block { transform: translateX(16px); }
+.phone-unit-right .phone-caption-block { transform: translateX(-16px); }
 
 /* --- Glow layer (bottom): rose, right phone only, and the dominant light on the
    dark half. Diffused through layered rose box-shadows (soft depth, several radii)
@@ -278,6 +287,22 @@ body[data-theme="light"] .logo { color: var(--fg); }
   /* Rose-tinted metal edge on the glowing phone. */
   background: linear-gradient(135deg,
     #d99daf 0%, #7d4b59 14%, #39292f 48%, #7d4b59 86%, #e3a9ba 100%);
+}
+
+/* Dynamic Island: a thin dark pill near the top of the screen — same treatment on
+   both phones (black pill; subtle on the dark screen, crisp on the cream one).
+   Desktop-only, so mobile stays pixel-identical (hidden at ≤768px below). */
+.dynamic-island {
+  position: absolute;
+  top: 19px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 35%;
+  height: 22px;
+  border-radius: 999px;
+  background: #050505;
+  z-index: 4; /* above the screen content and its glass sheen */
+  pointer-events: none;
 }
 
 /* --- Screen layer (top): real HTML text. A faint top-down sheen reads as glass
@@ -562,8 +587,12 @@ html.js [data-reveal].in {
 
 @media (max-width: 768px) {
   .phones { flex-direction: column; align-items: center; gap: 72px; }
-  /* Overlap/lean is a desktop-only composition; stacked phones stay upright. */
-  .phone-unit-left, .phone-unit-right { transform: none; z-index: auto; }
+  /* Overlap/lean/island are a desktop-only composition; mobile stays exactly as it
+     was — upright stacked phones, no tilt, no island (pixel-identical to before). */
+  .phone-unit-left, .phone-unit-right { z-index: auto; }
+  .phone-unit-left .phone-stage, .phone-unit-right .phone-stage { transform: none; filter: none; }
+  .phone-unit-left .phone-caption-block, .phone-unit-right .phone-caption-block { transform: none; }
+  .dynamic-island { display: none; }
   .standard-body { grid-template-columns: 1fr; text-align: center; }
   .callouts { justify-items: center; }
 }
