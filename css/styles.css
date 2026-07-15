@@ -200,21 +200,38 @@ body[data-theme="light"] .logo { color: var(--fg); }
 
 /* ---------- 02 / The Diagnosis: two layered HTML/CSS phones ---------- */
 
+/* Flex, not grid: a grid's two equal-width columns would center each phone in
+   its own ~540px slot at this container's 1100px cap, swallowing any overlap
+   shift in leftover whitespace. Flex lets the pair hug its own content width
+   and sit as one close composition, per refs/phone-overlap-composition-ref.png. */
 .phones {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: clamp(40px, 7vw, 120px);
-  align-items: start;
-  justify-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: clamp(0px, 1vw, 12px);
 }
 
 /* One unit = phone + its own caption, so the caption is always physically
-   under its phone (column on desktop, stacked pair on mobile). */
+   under its phone (row on desktop, stacked pair on mobile). Position/rotation
+   below is applied to the whole unit — caption and phone move together, so
+   alignment between them never breaks. */
 .phone-unit {
   display: flex;
   flex-direction: column;
   align-items: center;
+  flex: 0 0 auto;
   max-width: 320px;
+  position: relative;
+}
+/* Overlap + lean, referenced from refs/phone-overlap-composition-ref.png (spatial
+   composition only — proximity, overlap amount, tilt). Right phone leans in front. */
+.phone-unit-left {
+  z-index: 1;
+  transform: translateX(28px) rotate(-3deg);
+}
+.phone-unit-right {
+  z-index: 2;
+  transform: translateX(-28px) translateY(-18px) rotate(3deg);
 }
 
 /* Stage = the layered stack. Glow and frame are separate positioned children
@@ -544,7 +561,9 @@ html.js [data-reveal].in {
 /* ---------- Responsive ---------- */
 
 @media (max-width: 768px) {
-  .phones { grid-template-columns: 1fr; gap: 72px; }
+  .phones { flex-direction: column; align-items: center; gap: 72px; }
+  /* Overlap/lean is a desktop-only composition; stacked phones stay upright. */
+  .phone-unit-left, .phone-unit-right { transform: none; z-index: auto; }
   .standard-body { grid-template-columns: 1fr; text-align: center; }
   .callouts { justify-items: center; }
 }
