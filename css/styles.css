@@ -78,10 +78,23 @@ body,
 /* ---------- Typography ---------- */
 
 h1 {
-  font-size: clamp(56px, 8.5vw, 110px);
-  font-weight: 700;
+  /* Grown for the poster hero (H1 is now the sole hero element, no sub/counters
+     sharing the section) — max raised 110->128px, but no further: "She searched
+     at 10 PM." (the widest line) only clears the 1400px content-column ceiling
+     below ~132px, so a bigger max silently forced an extra wrap at literally
+     every desktop width tested, including well past 1440px. The 8.5vw
+     coefficient and 56px min are unchanged from before — both already verified
+     safe down to ~640px viewports; only the max needed reconsidering here.
+     Verified empirically (not estimated) by scanning 481-1920px. */
+  font-size: clamp(56px, 8.5vw, 128px);
+  font-weight: 550; /* lines 1-2: within the requested 500-600 band */
   letter-spacing: -0.03em;
   line-height: 1.04;
+}
+/* Line 3 only: poster weight-contrast, near-black and tighter than lines 1-2. */
+.h1-emphasis {
+  font-weight: 850; /* within the requested 800-900 band */
+  letter-spacing: -0.04em; /* within the requested -0.02 to -0.04em band */
 }
 /* Hero text may exceed the 1100px content column (spec: "hero text can go wider"). */
 .hook h1 { max-width: 1400px; }
@@ -91,7 +104,6 @@ h2 {
   letter-spacing: -0.02em;
   line-height: 1.1;
 }
-.hero-sub,
 .section-sub {
   font-size: 18px;
   font-weight: 300;
@@ -170,9 +182,43 @@ body[data-theme="light"] .logo { color: var(--fg); }
   outline-offset: 4px;
 }
 
-/* ---------- 01 / The Hook ---------- */
+/* ---------- 01 / The Hook — poster hero: logo + H1 + CTA, nothing else ---------- */
 
-.hook { position: relative; }
+.hook {
+  position: relative;
+  overflow: hidden; /* contains the grain layer cleanly at the section's edges */
+  /* Atmospheric depth so the charcoal stops reading as a flat wall — center is
+     ~7% lighter, far edge ~5% darker than base charcoal (#17161A), within the
+     requested 3-8% variance. Edges are subtle enough to still blend with the
+     flat charcoal of the sections above/below at the section boundary. */
+  background: radial-gradient(120% 90% at 50% 38%, #1e1d24 0%, var(--charcoal) 60%, #131218 100%);
+}
+/* Faint grain (optional per spec) — a low-frequency SVG turbulence, ~3.5% opacity.
+   Negative z-index: paints above .hook's own background but below the h1/CTA
+   text (in-flow static content always paints above negative-z-index siblings). */
+.hook::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.035;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-size: 180px 180px;
+}
+/* Staggered fade+rise on load — H1 leads, CTA follows a beat later. Both are
+   already in the first viewport, so the reveal observer fires immediately on
+   page load rather than waiting for scroll. */
+.hook h1[data-reveal] { transition-delay: 0.1s; }
+.hook .hero-cta-row[data-reveal] { transition-delay: 0.45s; }
+
+/* ---------- Proof strip — quiet supporting stats between Hero and Diagnosis ---------- */
+
+.proof-strip {
+  min-height: 0; /* override main>section's 100svh: a thin strip, not a full panel */
+  padding-top: clamp(56px, 8vh, 88px);
+  padding-bottom: clamp(56px, 8vh, 88px);
+}
 
 .counters {
   list-style: none;
@@ -182,15 +228,16 @@ body[data-theme="light"] .logo { color: var(--fg); }
 }
 .counter { max-width: 240px; }
 .counter-num {
-  /* Hierarchy fix: target ~2.75x smaller than h1 (h1 is 56/8.5vw/110 desktop),
-     so 2.8vw here keeps the same ~3.04x ratio through the shared vw-driven
-     range, settling at 110/40=2.75x once both sides hit their caps at wide
-     viewports — comfortably clear of the 2-2.5x hard floor at every width. */
-  font-size: clamp(20px, 2.8vw, 40px);
+  /* Deliberately quiet now that this lives in its own proof-strip, not sharing
+     a viewport with the H1 anymore: smaller than before, and muted grey rather
+     than pure white — the strip should read as a quiet footnote, not a rival
+     headline. Weight (not color) still marks the frozen "0" below. */
+  font-size: clamp(16px, 2.2vw, 32px);
   font-weight: 500;
   letter-spacing: -0.02em;
   line-height: 1;
   font-variant-numeric: tabular-nums;
+  color: var(--muted);
 }
 .counter-unit { font-size: .55em; font-weight: 300; }
 /* The frozen 0: one weight heavier. Deliberate, not broken. */
@@ -603,18 +650,16 @@ html.js [data-reveal].in {
 
 @media (max-width: 480px) {
   main > section { gap: 2rem; padding-top: 96px; }
-  /* Counters: one compact horizontal row; H1 stays in the first viewport. */
+  /* Poster H1 also grows on mobile, per "reconsider its scale" — still a hair
+     under h1's own floor-vs-line-3-weight balance; verified against wrapping. */
+  h1 { font-size: clamp(44px, 13.5vw, 64px); letter-spacing: -0.035em; }
+  .h1-emphasis { letter-spacing: -0.045em; }
+  /* Counters: one compact horizontal row, now living in the quiet proof-strip. */
   .counters { gap: 12px; align-items: flex-start; }
   .counter { flex: 1 1 0; min-width: 0; max-width: none; }
-  /* Hierarchy fix: target ~2.75x smaller than h1. Mobile h1 is clamp(40px,
-     12.8vw,56px); a flat value here needs margin against h1's own floor (40px),
-     not just its value at 390px — 18px holds a ratio >=2.2x even at a
-     hypothetical ~300px viewport, well past any real device this site targets. */
-  .counter-num { font-size: 18px; }
+  .counter-num { font-size: 14px; } /* smaller than before, matches the quieter strip */
   .counter-desc { font-size: 11px; margin-top: 8px; }
   .counter-source { font-size: 10px; }
-  h1 { font-size: clamp(40px, 12.8vw, 56px); letter-spacing: -0.035em; }
-  .hero-sub { font-size: 16px; }
   .site-head { padding: 20px; }
 }
 
