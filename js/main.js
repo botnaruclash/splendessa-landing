@@ -5,7 +5,7 @@
 "use strict";
 
 const VELORA_DEMO_URL = "https://velora.splendessa.com";
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyzWdawEB8ktbkwapq0JD-y2JJwDqMZe9BapiPV8vWfEGnYg-3VYq_PWIgR2M7jKiGEDw/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxbn6_WE5TwF0r12qE1k4s6MgwuoQH708js2exDXPyLCkOuCNy2tYpJzIN-__i5Ks3REw/exec";
 const ITI_VERSION = "29.1.2"; // intl-tel-input CDN build, lazy-loaded near Section 04
 
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -299,6 +299,7 @@ if (reducedMotion) {
   }
 
   function showSuccess() {
+    showFormLink.closest(".secondary-row").hidden = true;
     form.querySelector(".lead-fields").hidden = true;
     form.querySelector('button[type="submit"]').hidden = true;
     form.querySelector(".form-confirm").hidden = false;
