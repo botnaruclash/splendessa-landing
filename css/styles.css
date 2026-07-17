@@ -412,6 +412,12 @@ main > section > * {
   transition:background-color 1s ease,color 1s ease;
 }
 
+/* Scroll scrubber: quick theme switch while the statusbar tracks the sections
+   below the hero (the scrubber JS adds .sb-scrub there). Placed after
+   .theme-fading so the quick fade wins if the hero's nightfall beat fires
+   while the user has already scrolled away. */
+.statusbar.sb-scrub{transition:color .25s ease}
+
 /* ---------- hero responsive ---------- */
 @media (max-width:760px){
   /* scoping: no statusbar at all on mobile, and no dead space where it was */

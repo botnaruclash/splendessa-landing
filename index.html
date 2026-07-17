@@ -471,5 +471,148 @@
   document.getElementById('pReplay').addEventListener('click', replay);
 })();
 </script>
+<script>
+/* Scroll-aware statusbar. Below the hero it becomes site chrome that reacts to
+   what's underneath: (A) theme follows the underlying section's data-zone,
+   (B) the clock scrubs through the story's night as you scroll. While the hero
+   sits under the bar, the hero timeline keeps sole ownership of theme + clock.
+   Desktop only — the statusbar itself is display:none ≤760px. */
+(function(){
+  const statusbar = document.querySelector('.statusbar');
+  const hero = document.querySelector('.hero');
+  if (!statusbar || !hero) return;
+
+  const clock = document.getElementById('sbClock');
+  const ampmEl = statusbar.querySelector('.sb-ampm');
+  const dateEl = statusbar.querySelector('.sb-date');
+  const mobile = window.matchMedia('(max-width: 760px)');
+  const SB = 56; // the "statusbar line" is the bar's bottom edge
+
+  // Narrative time map — minutes since 10:05 PM (story start), reached when the
+  // statusbar line crosses the section's bottom edge. Optional third value:
+  // waypoint sits that many px into the section instead of at its bottom.
+  // Sections missing from the page are skipped; times interpolate across them.
+  const TIME_MAP = [
+    ['#hook',        0],        // hero bottom · 10:05 PM
+    ['#proof-strip', 35],       // 10:40 PM
+    ['#diagnosis',   75],       // 11:20 PM — matches the DM phone's clock
+    ['.flip',        650],      // 8:55 AM next day — the night fast-forward
+    ['#difference',  655],      // 9:00 AM — "away · opens 9:00 AM"
+    ['#standard',    657],      // 9:02 AM
+    ['#ultimatum',   660, 40],  // 9:05 AM locks just inside the section — safely before
+                                // the bar's 56px line at flush scroll, so anchor links land on 9:05
+  ];
+  const START_ABS = 22 * 60 + 5; // 10:05 PM in minutes-of-day
+
+  let pts = [];    // [{y, min}] measured waypoint offsets
+  let zones = [];  // [{top, bottom, theme}] from data-zone sections
+  let heroBottom = 0, docH = 0;
+
+  function measure(){
+    docH = document.documentElement.scrollHeight;
+    heroBottom = hero.getBoundingClientRect().bottom + window.scrollY;
+    pts = [];
+    for (const [sel, min, into] of TIME_MAP){
+      const el = document.querySelector(sel);
+      if (!el) continue;
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      pts.push({ y: into != null ? top + into : top + el.offsetHeight, min });
+    }
+    zones = [...document.querySelectorAll('main > section[data-zone]')].map((el) => {
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      return { top, bottom: top + el.offsetHeight, theme: el.dataset.zone === 'light' ? 'day' : 'night' };
+    });
+  }
+
+  // What the scrubber last wrote vs. the timeline's own latest writes — needed
+  // to hand the bar back cleanly when the hero returns underneath it.
+  let owned = false;
+  let sTheme = null, sClock = null, sAmpm = null, sDate = null;
+  let tlClock = clock.textContent;
+
+  function fmt(min){
+    const abs = START_ABS + min;
+    const mod = abs % (24 * 60);
+    const h24 = Math.floor(mod / 60), mm = mod % 60;
+    return {
+      clock: (h24 % 12 || 12) + ':' + String(mm).padStart(2, '0'),
+      ampm: h24 < 12 ? 'AM' : 'PM',
+      date: abs >= 24 * 60 ? 'Fri · Jul 17' : 'Thu · Jul 16',
+    };
+  }
+
+  function minutesAt(y){
+    if (!pts.length) return 0;
+    if (y <= pts[0].y) return pts[0].min;
+    for (let i = 0; i < pts.length - 1; i++){
+      if (y < pts[i + 1].y){
+        const a = pts[i], b = pts[i + 1];
+        return a.min + ((y - a.y) / (b.y - a.y)) * (b.min - a.min);
+      }
+    }
+    return pts[pts.length - 1].min; // frozen past the last waypoint
+  }
+
+  function themeAt(y){
+    for (const z of zones) if (y >= z.top && y < z.bottom) return z.theme;
+    return zones.length && y >= zones[zones.length - 1].bottom ? zones[zones.length - 1].theme : 'night';
+  }
+
+  function cede(){
+    owned = false;
+    statusbar.classList.remove('sb-scrub');
+    sTheme = sClock = sAmpm = sDate = null;
+    statusbar.dataset.theme = hero.dataset.theme; // mirror the timeline's state
+    clock.textContent = tlClock;
+    ampmEl.textContent = 'PM';
+    dateEl.textContent = 'Thu · Jul 16';
+  }
+
+  function update(){
+    if (mobile.matches) return;
+    if (document.documentElement.scrollHeight !== docH) measure();
+    const y = window.scrollY + SB;
+    if (y < heroBottom){
+      if (owned) cede();
+      return;
+    }
+    if (!owned){ owned = true; statusbar.classList.add('sb-scrub'); }
+    const t = fmt(Math.floor(minutesAt(y))); // clocks tick, they don't glide
+    const th = themeAt(y);
+    if (th !== sTheme){ sTheme = th; statusbar.dataset.theme = th; }
+    if (t.clock !== sClock){ sClock = t.clock; clock.textContent = t.clock; }
+    if (t.ampm !== sAmpm){ sAmpm = t.ampm; ampmEl.textContent = t.ampm; }
+    if (t.date !== sDate){ sDate = t.date; dateEl.textContent = t.date; }
+  }
+
+  // The hero timeline writes the clock/theme without knowing about the scrubber
+  // (mid-story scroll-away, the nightfall beat). Record its writes as the state
+  // to restore on ceding, and re-assert the scrubbed values while we own the bar.
+  const mo = new MutationObserver(() => {
+    if (!owned){ tlClock = clock.textContent; return; }
+    if (sClock !== null && clock.textContent !== sClock){
+      tlClock = clock.textContent;
+      clock.textContent = sClock;
+    }
+    if (sTheme !== null && statusbar.dataset.theme !== sTheme){
+      statusbar.dataset.theme = sTheme;
+    }
+  });
+  mo.observe(statusbar, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['data-theme'] });
+
+  let queued = false;
+  addEventListener('scroll', () => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => { queued = false; update(); });
+  }, { passive: true });
+  addEventListener('resize', () => { measure(); update(); });
+  addEventListener('load', () => { measure(); update(); }); // images settle heights
+  mobile.addEventListener('change', () => { measure(); update(); });
+
+  measure();
+  update();
+})();
+</script>
 </body>
 </html>
