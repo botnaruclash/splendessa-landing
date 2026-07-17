@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Splendessa — hero v6 · The Night Ledger</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..700;1,6..96,400..700&family=Spline+Sans+Mono:wght@400..700&display=swap" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+
+<style>
+  /* ------------------------------------------------------------------
+     Default state in CSS = FINAL state (white / everything visible /
+     clock reading 11:20). No-JS and prefers-reduced-motion both land
+     here with zero animation. JS re-parks everything into "night"
+     before playing.
+     Palette (locked): #FFFFFF · #17161A · rose #B5536D ·
+     greys: #5C5964 (on white) / #9A96A0 (on charcoal) — two total.
+  ------------------------------------------------------------------ */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .stage {
+    --bg:   #FFFFFF;
+    --ink:  #17161A;
+    --mute: #5C5964;
+    --rose: #B5536D;
+    --rule: color-mix(in srgb, var(--mute) 30%, transparent);
+
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  html, body { background: #FFFFFF; }
+  body { font-family: "Spline Sans Mono", ui-monospace, monospace; }
+
+  a { color: inherit; }
+
+  :focus-visible {
+    outline: 2px solid var(--rose);
+    outline-offset: 3px;
+    border-radius: 1px;
+  }
+
+  /* ---------- top bar ---------- */
+  .top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: clamp(1.1rem, 3vw, 1.8rem) clamp(1.25rem, 4vw, 2.75rem);
+  }
+  .wordmark {
+    font-family: "Bodoni Moda", serif;
+    font-size: 1.4rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    text-decoration: none;
+  }
+  .replay {
+    font: 600 0.72rem/1 "Spline Sans Mono", monospace;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--mute);
+    background: none;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: 0.6em 1.1em;
+    cursor: pointer;
+  }
+  .replay:hover { color: var(--ink); border-color: var(--mute); }
+
+  /* ---------- narrative column ---------- */
+  .col {
+    width: min(880px, 100%);
+    margin: auto;
+    padding: clamp(1.25rem, 4vw, 2.75rem);
+    padding-top: 0;
+  }
+
+  .clock {
+    font-family: "Bodoni Moda", serif;
+    font-weight: 480;
+    font-size: clamp(4.4rem, 21vw, 15rem);
+    line-height: 0.9;
+    letter-spacing: -0.015em;
+    font-feature-settings: "lnum" 1;
+    user-select: none;
+  }
+  /* fixed-width digit slots so ticking never jiggles the layout */
+  .clock .dg { display: inline-block; width: 0.58em; text-align: center; }
+  .clock .cl { display: inline-block; width: 0.32em; text-align: center; }
+
+  /* ---------- ledger ---------- */
+  .ledger {
+    list-style: none;
+    margin-top: clamp(1.6rem, 4vw, 2.6rem);
+    max-width: 30ch;
+    border-top: 1px solid var(--rule);
+    font-size: clamp(0.85rem, 2.4vw, 0.98rem);
+  }
+  .row {
+    display: flex;
+    gap: 2.4ch;
+    align-items: baseline;
+    padding: 0.62em 0.1em;
+    border-bottom: 1px solid var(--rule);
+  }
+  .row .t  { font-weight: 600; }
+  .row .lb { color: var(--mute); }
+  .row .gap { padding-left: 1ch; opacity: 0.75; }
+  .dot {
+    display: inline-block;
+    width: 0.5em; height: 0.5em;
+    border-radius: 50%;
+    background: var(--rose);
+    margin-left: 0.8ch;
+  }
+
+  /* ---------- resolution ---------- */
+  .resolve { margin-top: clamp(2.1rem, 5vw, 3.4rem); }
+
+  h1 {
+    font-family: "Bodoni Moda", serif;
+    font-weight: 500;
+    font-size: clamp(2.05rem, 4.8vw, 3.5rem);
+    line-height: 1.04;
+    letter-spacing: -0.01em;
+  }
+  h1 em { font-style: italic; }
+
+  .sub {
+    margin-top: 1.15rem;
+    max-width: 52ch;
+    font-size: clamp(0.85rem, 2.4vw, 0.95rem);
+    line-height: 1.7;
+    color: var(--mute);
+  }
+  .src {
+    margin-top: 0.65rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--mute);
+    opacity: 0.8;
+  }
+
+  .cta-row { margin-top: clamp(1.5rem, 4vw, 2rem); }
+  .cta {
+    display: inline-block;
+    font: 600 0.84rem/1 "Spline Sans Mono", monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: #FFFFFF;
+    background: var(--rose);
+    padding: 1.1em 1.7em;
+    border-radius: 2px;
+  }
+  .cta:hover { filter: brightness(0.92); }
+  .cta:focus-visible { outline-color: var(--ink); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .cta { transition: transform 0.18s ease, filter 0.18s ease; }
+    .cta:hover { transform: translateY(-2px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .replay { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+
+  <header class="top">
+    <a class="wordmark" href="#">splendessa</a>
+    <button class="replay" id="replay" type="button">↻ Replay</button>
+  </header>
+
+  <main class="col">
+
+    <!-- the clock is decorative motion; the ledger below carries the same
+         facts for assistive tech -->
+    <div class="clock" id="clock" aria-hidden="true"><span class="dg">1</span><span class="dg">1</span><span class="cl">:</span><span class="dg">2</span><span class="dg">0</span></div>
+
+    <ol class="ledger">
+      <li class="row"><span class="t">22:00</span><span class="lb">searched</span></li>
+      <li class="row"><span class="t">22:15</span><span class="lb">sent</span></li>
+      <li class="row"><span class="t">22:26</span><span class="lb">confirmed<span class="dot" aria-hidden="true"></span></span></li>
+      <li class="row"><span class="t">11:20</span><span class="lb">seen<span class="gap">+13:05</span></span></li>
+    </ol>
+
+    <div class="resolve">
+      <h1 class="rise">Booked in 26&nbsp;minutes.<br><em>Not with you.</em></h1>
+      <p class="sub rise">46% of bookings happen after the doors close. Splendessa
+        builds med-spa sites that catch them — live calendar, instant
+        confirmation, no unread DMs.</p>
+      <p class="src rise">Phorest — 5,000+ salons &amp; spas analyzed</p>
+      <p class="cta-row rise"><a class="cta" href="#book">Book a 15-min intro call&nbsp;→</a></p>
+    </div>
+
+  </main>
+</div>
+
+<script>
+(() => {
+  const motionOK = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!motionOK || !window.gsap) return; // static final state stands
+
+  const stage = document.getElementById('stage');
+  const clock = document.getElementById('clock');
+  const dgs   = clock.querySelectorAll('.dg');
+  const rows  = gsap.utils.toArray('.ledger .row');
+
+  const NIGHT = { '--bg': '#17161A', '--ink': '#FFFFFF', '--mute': '#9A96A0' };
+  const DAY   = { '--bg': '#FFFFFF', '--ink': '#17161A', '--mute': '#5C5964' };
+
+  // absolute minutes; 22:00 = 1320, 11:20 next day = 2120
+  const T = { v: 2120 };
+
+  // Clock text is drawn from the ticker, never from tween callbacks —
+  // seeks/restarts suppress onUpdate but always write tweened values.
+  let drawn = null;
+  function draw() {
+    const v = Math.round(T.v) % 1440;
+    if (v === drawn) return;
+    drawn = v;
+    const s = String(Math.floor(v / 60)).padStart(2, '0') +
+              String(v % 60).padStart(2, '0');
+    for (let i = 0; i < 4; i++) dgs[i].textContent = s[i];
+  }
+  gsap.ticker.add(draw);
+
+  const tl = gsap.timeline({ paused: true, defaults: { ease: 'power2.out', lazy: false } });
+
+  // NB: gsap mutates vars objects (merges defaults + parent), so NIGHT/DAY
+  // are always passed as copies — reusing one object reparents the next
+  // tween into this timeline at its end
+  tl
+    // ---- park everything into night ----
+    .set(stage, { ...NIGHT })
+    .set(T, { v: 1320 })
+    .set(clock, { autoAlpha: 0, y: 12, filter: 'blur(0px)', clearProps: 'color' })
+    .set(rows, { autoAlpha: 0, y: 14 })
+    .set('.rise', { autoAlpha: 0, y: 26 })
+
+    // ---- 22:00 — she starts looking ----
+    .to(clock,  { autoAlpha: 1, y: 0, duration: 0.9 }, 0.15)
+    .to(rows[0], { autoAlpha: 1, y: 0, duration: 0.5 }, 0.75)
+
+    // ---- 22:15 — the DM goes out ----
+    .to(T, { v: 1335, duration: 0.85, ease: 'power1.inOut', snap: { v: 1 } }, 1.5)
+    .to(rows[1], { autoAlpha: 1, y: 0, duration: 0.5 }, 2.2)
+
+    // ---- 22:26 — booked. elsewhere. the wound flashes rose ----
+    .to(T, { v: 1346, duration: 0.6, ease: 'power1.inOut', snap: { v: 1 } }, 2.85)
+    .to(rows[2], { autoAlpha: 1, y: 0, duration: 0.5 }, 3.4)
+    .to(clock, { color: '#B5536D', duration: 0.3, ease: 'power1.in' }, 3.4)
+    .to(clock, { color: '#FFFFFF', duration: 0.6 }, 4.3)
+
+    // ---- the night spins past unanswered ----
+    .to(T, { v: 2120, duration: 1.6, ease: 'power2.inOut', snap: { v: 1 } }, 4.6)
+    .to(clock, { filter: 'blur(7px)', duration: 0.5, ease: 'power1.in' }, 4.6)
+    .to(clock, { filter: 'blur(0px)', duration: 0.65, ease: 'power1.out' }, 5.6)
+    .to(rows[3], { autoAlpha: 1, y: 0, duration: 0.5 }, 6.2)
+
+    // ---- dawn — the page wakes up, first sentences allowed ----
+    .to(stage, { ...DAY, duration: 1.15, ease: 'power2.inOut' }, 6.95)
+    .set(clock, { clearProps: 'color' }, 6.95)
+    .to('.rise', { autoAlpha: 1, y: 0, duration: 0.85, stagger: 0.13 }, 7.3);
+
+  // park night state immediately (before fonts finish) to avoid a flash
+  // of the final frame, then play once type is ready
+  gsap.set(stage, { ...NIGHT });
+  gsap.set(clock, { autoAlpha: 0, y: 12 });
+  gsap.set(rows, { autoAlpha: 0, y: 14 });
+  gsap.set('.rise', { autoAlpha: 0, y: 26 });
+  T.v = 1320;
+  draw();
+  document.fonts.ready.then(() => tl.play(0));
+
+  document.getElementById('replay').addEventListener('click', () => tl.play(0));
+
+  window.__tl = tl; // QA hook: seek with __tl.pause(t)
+})();
+</script>
+
+</body>
+</html>

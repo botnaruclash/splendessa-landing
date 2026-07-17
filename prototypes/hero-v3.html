@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Splendessa — hero prototype v3 · “Seen”</title>
+<!-- Throwaway prototype. Direction: absence — the story told entirely through
+     timestamps and one read receipt in a charcoal void. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..600&family=Fragment+Mono:ital@0;1&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<style>
+  :root{
+    --ink:   #17161A;
+    --paper: #FFFFFF;
+    --mist:  #96919B;  /* grey 1 — muted text */
+    --slate: #232229;  /* grey 2 — surfaces & hairlines */
+    --rose:  #B5536D;  /* the one accent: the booking that happened without you */
+    --mono: "Fragment Mono", ui-monospace, "SF Mono", monospace;
+    --display: "Bodoni Moda", Didot, "Bodoni MT", serif;
+  }
+
+  *{ box-sizing:border-box; }
+  html, body{ height:100%; }
+  body{
+    margin:0;
+    background:var(--ink);
+    color:var(--paper);
+    font-family:var(--mono);
+    overflow-x:hidden;
+  }
+
+  a:focus-visible, button:focus-visible{
+    outline:2px solid var(--rose);
+    outline-offset:3px;
+    border-radius:2px;
+  }
+
+  .sr-only{
+    position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+    overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
+  }
+
+  /* ---------- stage: the void ---------- */
+  .stage{
+    position:relative;
+    height:100dvh;
+    min-height:660px;
+    overflow:hidden;
+  }
+  /* a whisper of light near the message — the only illumination in the room */
+  .stage::before{
+    content:"";
+    position:absolute; inset:0;
+    background:radial-gradient(90% 70% at 68% 26%, rgba(255,255,255,.035), transparent 55%);
+    pointer-events:none;
+  }
+
+  /* ---------- header ---------- */
+  .top{
+    position:absolute; inset:0 0 auto 0;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:22px 28px;
+    z-index:5;
+  }
+  .wordmark{
+    font:400 19px/1 var(--display);
+    letter-spacing:.02em;
+    color:var(--paper);
+    text-decoration:none;
+  }
+  .replay{
+    font:400 10.5px/1 var(--mono);
+    letter-spacing:.2em; text-transform:uppercase;
+    color:var(--mist);
+    background:none;
+    border:1px solid var(--slate);
+    padding:10px 15px;
+    cursor:pointer;
+    transition:color .2s, border-color .2s;
+  }
+  .replay:hover{ color:var(--paper); border-color:var(--mist); }
+
+  /* ---------- the clock — protagonist ---------- */
+  .clock-group{
+    position:absolute; top:12%; left:0; right:0;
+    text-align:center;
+    pointer-events:none;
+  }
+  .clock{
+    margin:0;
+    font:400 15px/1 var(--mono);
+    letter-spacing:.14em;
+    color:var(--paper);
+    font-variant-numeric:tabular-nums;
+  }
+  .day{
+    margin:9px 0 0;
+    font:400 9.5px/1 var(--mono);
+    letter-spacing:.3em; text-transform:uppercase;
+    color:var(--mist);
+  }
+
+  /* ---------- her message ---------- */
+  .thread{
+    position:absolute; top:25%; right:12vw;
+    max-width:min(320px, 74vw);
+    text-align:right;
+    pointer-events:none;
+  }
+  .bubble{
+    display:inline-block;
+    margin:0;
+    text-align:left;
+    background:var(--slate);
+    color:var(--paper);
+    font:400 13px/1.55 var(--mono);
+    padding:13px 16px;
+    border-radius:16px 16px 4px 16px;
+  }
+  .receipt{
+    margin:9px 2px 0 0;
+    font:400 11px/1 var(--mono);
+    letter-spacing:.06em;
+    color:var(--mist);
+  }
+  .receipt.seen{ font-style:italic; }
+
+  /* ---------- the booking that happened without you ---------- */
+  .lost{
+    position:absolute; top:52%; right:26vw;
+    pointer-events:none;
+  }
+  .stamp{
+    width:max-content; max-width:80vw;
+    border:1px solid var(--rose);
+    padding:14px 18px 15px;
+    transform:rotate(-2deg);
+  }
+  .stamp-line1{
+    margin:0;
+    font:400 12px/1.4 var(--mono);
+    letter-spacing:.04em;
+    color:var(--paper);
+  }
+  .stamp-line2{
+    margin:7px 0 0;
+    font:400 11px/1 var(--mono);
+    color:var(--mist);
+  }
+  .aside{
+    margin:13px 0 0 4px;
+    font:italic 400 11px/1.5 var(--mono);
+    color:var(--mist);
+  }
+
+  /* ---------- the thesis ---------- */
+  .statement{
+    position:absolute; left:6vw; bottom:8%;
+    max-width:720px;
+    padding-right:6vw;
+  }
+  h1{
+    margin:0;
+    font-family:var(--display);
+    font-weight:450;
+    font-size:clamp(2.35rem, 1.1rem + 4.6vw, 4.4rem);
+    line-height:1.06;
+    letter-spacing:.004em;
+  }
+  h1 em{ font-style:italic; font-weight:430; }
+  .sub{
+    margin:18px 0 0;
+    max-width:46ch;
+    font:400 12.5px/1.7 var(--mono);
+    letter-spacing:.02em;
+    color:var(--mist);
+  }
+  .cta{
+    display:inline-block;
+    margin-top:27px;
+    font:400 11.5px/1 var(--mono);
+    letter-spacing:.22em; text-transform:uppercase;
+    color:var(--paper);
+    text-decoration:none;
+    border:1px solid var(--mist);
+    padding:15px 22px;
+    transition:background .2s, color .2s, border-color .2s;
+  }
+  .cta:hover{ background:var(--paper); color:var(--ink); border-color:var(--paper); }
+
+  /* ---------- 390-class screens ---------- */
+  @media (max-width:640px){
+    .top{ padding:18px 20px; }
+    .clock-group{ top:11%; }
+    .thread{ top:21%; right:7vw; }
+    .lost{ top:47%; right:auto; left:8vw; }
+    .statement{ left:7vw; bottom:6%; padding-right:7vw; }
+    .sub{ font-size:12px; }
+  }
+
+  /* reduced motion: page renders in its final state; nothing to replay */
+  @media (prefers-reduced-motion: reduce){
+    .replay{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <header class="top">
+    <a class="wordmark" href="#">splendessa</a>
+    <button class="replay" id="replay" type="button" aria-label="Replay intro">&#8635;&nbsp;&nbsp;replay</button>
+  </header>
+
+  <!-- Visual artifacts are decorative reconstructions; the narrative for
+       screen readers lives in the .sr-only paragraph below. -->
+  <div class="clock-group" aria-hidden="true">
+    <p class="clock" id="clock-time">11:20</p>
+    <p class="day" id="day-label">next morning</p>
+  </div>
+
+  <div class="thread" aria-hidden="true">
+    <p class="bubble">Hi! How much is laser hair removal?</p>
+    <p class="receipt seen" id="receipt">Seen 11:20</p>
+  </div>
+
+  <div class="lost" aria-hidden="true">
+    <div class="stamp">
+      <p class="stamp-line1">22:26 — booking confirmed</p>
+      <p class="stamp-line2">velora.splendessa.com</p>
+    </div>
+    <p class="aside">— the same client, twelve minutes later.</p>
+  </div>
+
+  <p class="sr-only">
+    At 22:14 a client messages your clinic: “Hi! How much is laser hair removal?”
+    The message sits on Delivered. At 22:26 she books elsewhere — instant
+    confirmation at velora.splendessa.com. You see her message at 11:20 the next
+    morning.
+  </p>
+
+  <div class="statement">
+    <h1><em>&ldquo;Seen&rdquo;</em> isn&rsquo;t<br>a booking system.</h1>
+    <p class="sub">She waited twelve minutes. Your reply took thirteen hours.</p>
+    <a class="cta" href="#">See the 10 PM Standard&nbsp;&darr;</a>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var replayBtn = document.getElementById("replay");
+
+  // No GSAP (offline / CDN blocked): the DOM already IS the final state.
+  if (!window.gsap){ replayBtn.style.display = "none"; return; }
+
+  var timeEl    = document.getElementById("clock-time");
+  var dayEl     = document.getElementById("day-label");
+  var receiptEl = document.getElementById("receipt");
+
+  var START = 22 * 60 + 14;          // 22:14
+  var GONE  = 12;                    // +12 min  -> 22:26, she books elsewhere
+  var SEEN  = 786;                   // +13h06m  -> 11:20 next morning
+  var state = { min: SEEN };
+
+  function renderClock(){
+    var t = (START + Math.round(state.min)) % 1440;
+    var h = String(Math.floor(t / 60)).padStart(2, "0");
+    var m = String(t % 60).padStart(2, "0");
+    timeEl.textContent = h + ":" + m;
+  }
+
+  var hidden = [".clock-group", ".bubble", ".receipt", ".lost"];
+  var statementKids = gsap.utils.toArray(".statement > *");
+
+  function setInitial(){
+    state.min = 0; renderClock();
+    dayEl.textContent = "tonight";
+    receiptEl.textContent = "Delivered";
+    receiptEl.classList.remove("seen");
+    gsap.set(hidden, { autoAlpha: 0 });
+    gsap.set(timeEl, { filter: "blur(0px)", opacity: 1 });
+    gsap.set(statementKids, { autoAlpha: 0, y: 14 });
+  }
+
+  function setFinal(){
+    state.min = SEEN; renderClock();
+    dayEl.textContent = "next morning";
+    receiptEl.textContent = "Seen 11:20";
+    receiptEl.classList.add("seen");
+    gsap.set(hidden.concat([timeEl]), { clearProps: "all" });
+    gsap.set(statementKids, { clearProps: "all" });
+  }
+
+  function build(){
+    // lazy:false — skipping seeks tweens to their end on first render;
+    // lazy rendering silently drops that write.
+    var t = gsap.timeline({ defaults: { ease: "power2.out", duration: 0.7, lazy: false } });
+
+    // 22:14 — a message arrives in the dark
+    t.to(".clock-group", { autoAlpha: 1, duration: 0.9 }, 0.35);
+    t.fromTo(".bubble",
+      { autoAlpha: 0, y: 10, scale: 0.97 },
+      { autoAlpha: 1, y: 0, scale: 1, duration: 0.65 }, 1.0);
+    t.to(".receipt", { autoAlpha: 1, duration: 0.5 }, "+=0.55");
+
+    // the wait — nothing happens except the clock
+    t.to(state, {
+      min: GONE, duration: 2.6, ease: "power1.inOut",
+      snap: { min: 1 }, onUpdate: renderClock
+    }, "+=0.55");
+
+    // 22:26 — she's gone
+    t.fromTo(".lost",
+      { autoAlpha: 0, y: 8 },
+      { autoAlpha: 1, y: 0, duration: 0.6, ease: "power3.out" }, "+=0.15");
+
+    // the night blurs past
+    t.to(timeEl, { filter: "blur(4px)", opacity: 0.35, duration: 0.3 }, "+=1.0");
+    t.to(state, {
+      min: SEEN, duration: 1.25, ease: "power2.inOut",
+      snap: { min: 1 }, onUpdate: renderClock
+    }, "<");
+    t.add(function(){ dayEl.textContent = "next morning"; }, "<0.6");
+    t.to(timeEl, { filter: "blur(0px)", opacity: 1, duration: 0.4 }, ">-0.15");
+
+    // 11:20 — the receipt finally flips
+    t.to(".receipt", { autoAlpha: 0, duration: 0.22 }, "+=0.35");
+    t.add(function(){
+      receiptEl.textContent = "Seen 11:20";
+      receiptEl.classList.add("seen");
+    });
+    t.to(".receipt", { autoAlpha: 1, duration: 0.5 });
+
+    // the thesis
+    t.to(statementKids, {
+      autoAlpha: 1, y: 0, duration: 0.9, stagger: 0.14, ease: "power3.out"
+    }, "+=0.5");
+
+    return t;
+  }
+
+  var tl = null;
+  var mm = gsap.matchMedia();
+  mm.add({
+    ok:     "(prefers-reduced-motion: no-preference)",
+    reduce: "(prefers-reduced-motion: reduce)"
+  }, function(ctx){
+    if (ctx.conditions.ok){
+      setInitial();
+      tl = build();
+    } else {
+      tl = null;
+      setFinal();
+    }
+  });
+
+  replayBtn.addEventListener("click", function(){
+    if (!tl) return;
+    setInitial();
+    tl.restart();
+  });
+
+  // click / Esc anywhere skips to the end — the wait is deliberate, not mandatory
+  function skip(){
+    if (tl && tl.isActive()) tl.progress(1, false);
+  }
+  document.addEventListener("pointerdown", function(e){
+    if (e.target.closest("a,button")) return;
+    skip();
+  });
+  document.addEventListener("keydown", function(e){
+    if (e.key === "Escape") skip();
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Splendessa — Hero v9 · The Day Sheet</title>
+<script>
+  /* Set before first paint so animated elements can be parked hidden.
+     Under prefers-reduced-motion this never runs → page renders final state. */
+  if (matchMedia('(prefers-reduced-motion: no-preference)').matches) {
+    document.documentElement.classList.add('anim');
+  }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;0,6..96,600;1,6..96,400;1,6..96,500&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FFFFFF;
+    --ink: #17161A;
+    --grey-1: #75717A;   /* muted text */
+    --grey-2: #E3E1E6;   /* hairlines  */
+    --rose: #B5536D;
+    --rose-deep: #9C4059;
+    --row-h: 48px;
+    --ruler-w: 76px;
+    --strip-pad: 18px;
+    --serif: "Bodoni Moda", Didot, "Bodoni MT", serif;
+    --sans: "Archivo", system-ui, sans-serif;
+    --mono: "Spline Sans Mono", ui-monospace, monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { background: var(--paper); }
+
+  body {
+    font-family: var(--sans);
+    color: var(--ink);
+    background: var(--paper);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: inherit; }
+
+  :focus-visible {
+    outline: 2px solid var(--rose);
+    outline-offset: 2px;
+  }
+
+  .frame {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 clamp(20px, 4vw, 48px);
+  }
+
+  /* ── Nav ─────────────────────────────────────────── */
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 26px 0 22px;
+  }
+  .wordmark {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 24px;
+    letter-spacing: .01em;
+    text-decoration: none;
+  }
+  .nav-cta {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: .02em;
+    text-decoration: none;
+    border: 1px solid var(--ink);
+    border-radius: 2px;
+    padding: 9px 16px;
+    transition: background-color .18s ease, color .18s ease;
+  }
+  .nav-cta:hover { background: var(--ink); color: var(--paper); }
+
+  /* ── Day header ──────────────────────────────────── */
+  .dayhead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--grey-1);
+    padding: 26px 0 12px;
+    border-bottom: 1px solid var(--grey-2);
+  }
+  .dayhead .opening { color: var(--rose); }
+
+  /* ── Sheet ───────────────────────────────────────── */
+  .sheet { padding: 14px 0 72px; }
+
+  .row {
+    display: grid;
+    grid-template-columns: var(--ruler-w) 1fr;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .t {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--grey-1);
+    padding-right: 18px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .strip {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    height: var(--row-h);
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 3px;
+    padding: 0 var(--strip-pad);
+    font-size: 14px;
+  }
+  .svc { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .who { color: rgba(255,255,255,.62); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dur {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: rgba(255,255,255,.5);
+    white-space: nowrap;
+  }
+  .row.close .closed {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--grey-1);
+    padding-left: var(--strip-pad);
+  }
+
+  /* ── The gap ─────────────────────────────────────── */
+  .gap {
+    display: grid;
+    grid-template-columns: var(--ruler-w) 1fr;
+    margin-bottom: 6px;
+    overflow: hidden;
+  }
+  .gap .t { padding-top: 4px; }
+  .gap-inner { min-width: 0; }
+  .gap-rule {
+    height: 2px;
+    background: repeating-linear-gradient(90deg, var(--rose) 0 10px, transparent 10px 19px);
+    transform-origin: left center;
+  }
+  .gap-content {
+    padding: clamp(28px, 4.5vh, 52px) var(--strip-pad) clamp(30px, 5vh, 56px);
+  }
+
+  .slot-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--rose);
+    margin-bottom: clamp(18px, 3vh, 30px);
+  }
+  .slot-tag .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--rose);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .slot-tag .dot { animation: pulse 2.4s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+  }
+
+  .hl {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: clamp(2.5rem, 5.4vw, 4.9rem);
+    line-height: 1.04;
+    letter-spacing: -.005em;
+    max-width: 17ch;
+    margin-bottom: clamp(18px, 3vh, 28px);
+  }
+  .hl .line { display: block; overflow: hidden; }
+  .hl .line-in { display: block; padding-bottom: .06em; margin-bottom: -.06em; }
+  .hl em { font-style: italic; font-weight: 400; }
+
+  .gap-sub {
+    font-size: clamp(15px, 1.2vw, 17px);
+    line-height: 1.65;
+    color: var(--grey-1);
+    max-width: 46ch;
+    margin-bottom: clamp(24px, 3.6vh, 36px);
+  }
+  .gap-sub strong { color: var(--ink); font-weight: 500; }
+
+  .gap-cta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px 26px;
+    margin-bottom: clamp(26px, 4vh, 40px);
+  }
+  .btn {
+    display: inline-block;
+    background: var(--rose);
+    color: var(--paper);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: .01em;
+    padding: 15px 28px;
+    border-radius: 2px;
+    transition: background-color .18s ease;
+  }
+  .btn:hover { background: var(--rose-deep); }
+  .btn:focus-visible { outline-color: var(--ink); }
+  .ghost {
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    border-bottom: 1px solid var(--grey-2);
+    padding-bottom: 3px;
+    transition: border-color .18s ease;
+  }
+  .ghost:hover { border-color: var(--ink); }
+
+  .gap-note {
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--grey-1);
+    max-width: 52ch;
+  }
+  .gap-note .num { color: var(--ink); font-weight: 500; }
+
+  /* ── Replay ──────────────────────────────────────── */
+  .replay {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .06em;
+    color: var(--grey-1);
+    background: var(--paper);
+    border: 1px solid var(--grey-2);
+    border-radius: 2px;
+    padding: 9px 14px;
+    cursor: pointer;
+    transition: color .18s ease, border-color .18s ease;
+  }
+  .replay:hover { color: var(--ink); border-color: var(--ink); }
+  @media (prefers-reduced-motion: reduce) { .replay { display: none; } }
+
+  /* ── Animation parking (only when .anim is set) ──── */
+  .anim .nav,
+  .anim .dayhead,
+  .anim .row,
+  .anim .slot-tag,
+  .anim .hl .line-in,
+  .anim .gap-sub,
+  .anim .gap-cta,
+  .anim .gap-note,
+  .anim .gap-rule { visibility: hidden; }
+  .anim .gap { height: var(--row-h); }
+
+  /* ── Mobile ──────────────────────────────────────── */
+  @media (max-width: 640px) {
+    :root { --ruler-w: 52px; --row-h: 42px; --strip-pad: 12px; }
+    .t { font-size: 11px; padding-right: 10px; }
+    .strip { font-size: 13px; gap: 8px; }
+    .who { display: none; }
+    .dur { font-size: 11px; }
+    .dayhead { font-size: 10px; letter-spacing: .08em; }
+    .hl { font-size: clamp(2.1rem, 10.5vw, 2.7rem); }
+    .gap-cta { gap: 12px 18px; }
+    .btn { padding: 13px 22px; font-size: 14px; }
+    .wordmark { font-size: 20px; }
+    .nav { padding: 18px 0 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="frame">
+  <header class="nav">
+    <a class="wordmark" href="#top">Splendessa</a>
+    <a class="nav-cta" href="#book">Book a call</a>
+  </header>
+
+  <main>
+    <div class="dayhead" aria-label="Schedule for tomorrow, Friday July 17">
+      <span>Tomorrow — Friday, July 17</span>
+      <span>9 booked · <span class="opening">1 opening</span></span>
+    </div>
+
+    <div class="sheet">
+      <div class="row">
+        <span class="t">9:00</span>
+        <div class="strip"><span class="svc">Dermal filler, cheeks</span><span class="who">Alina R.</span><span class="dur">60 min</span></div>
+      </div>
+
+      <section class="gap" aria-label="10:00 — unbooked slot">
+        <span class="t">10:00</span>
+        <div class="gap-inner">
+          <div class="gap-rule" aria-hidden="true"></div>
+          <div class="gap-content">
+            <p class="slot-tag"><span class="dot" aria-hidden="true"></span>10:00 – 11:00 · unbooked</p>
+            <h1 class="hl">
+              <span class="line"><span class="line-in">The 10 o&rsquo;clock</span></span>
+              <span class="line"><span class="line-in">that <em>never happened.</em></span></span>
+            </h1>
+            <p class="gap-sub">She asked for this slot at 10:14 last night — after close, when nearly
+              half of all bookings happen. Your site couldn&rsquo;t answer, so another clinic&rsquo;s did.
+              <strong>Splendessa builds med-spa websites that take the booking while you sleep.</strong></p>
+            <div class="gap-cta">
+              <a class="btn" href="#book">Book a 15-min intro call</a>
+              <a class="ghost" href="#demo">See a site that never sleeps&nbsp;&rarr;</a>
+            </div>
+            <p class="gap-note"><span class="num">46%</span> of salon &amp; spa bookings are made outside
+              opening hours — Phorest, 5,000+ salons analyzed.</p>
+          </div>
+          <div class="gap-rule" aria-hidden="true"></div>
+        </div>
+      </section>
+
+      <div class="row">
+        <span class="t">11:00</span>
+        <div class="strip"><span class="svc">HydraFacial</span><span class="who">Camelia D.</span><span class="dur">45 min</span></div>
+      </div>
+      <div class="row">
+        <span class="t">11:45</span>
+        <div class="strip"><span class="svc">Lip filler, follow-up</span><span class="who">S. Weber</span><span class="dur">30 min</span></div>
+      </div>
+      <div class="row">
+        <span class="t">12:30</span>
+        <div class="strip"><span class="svc">Microneedling</span><span class="who">Ioana T.</span><span class="dur">60 min</span></div>
+      </div>
+      <div class="row">
+        <span class="t">13:30</span>
+        <div class="strip"><span class="svc">Chemical peel</span><span class="who">M. Albu</span><span class="dur">45 min</span></div>
+      </div>
+      <div class="row">
+        <span class="t">14:15</span>
+        <div class="strip"><span class="svc">Botox consult</span><span class="who">new client</span><span class="dur">30 min</span></div>
+      </div>
+      <div class="row">
+        <span class="t">15:00</span>
+        <div class="strip"><span class="svc">Laser, session 3 of 6</span><span class="who">Diana P.</span><span class="dur">45 min</span></div>
+      </div>
+      <div class="row">
+        <span class="t">16:00</span>
+        <div class="strip"><span class="svc">Profhilo</span><span class="who">R. Ionescu</span><span class="dur">45 min</span></div>
+      </div>
+      <div class="row">
+        <span class="t">17:00</span>
+        <div class="strip"><span class="svc">Skin analysis</span><span class="who">new client</span><span class="dur">45 min</span></div>
+      </div>
+      <div class="row close">
+        <span class="t">18:00</span>
+        <span class="closed">— doors close —</span>
+      </div>
+    </div>
+  </main>
+</div>
+
+<button class="replay" type="button" aria-label="Replay intro animation">&#8635;&nbsp;replay</button>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script>
+(function () {
+  var root = document.documentElement;
+  if (!root.classList.contains('anim')) return; // reduced motion → final state, no JS
+
+  if (!window.gsap) { root.classList.remove('anim'); return; } // CDN failed → show page
+
+  var tl = null;
+  var gap = document.querySelector('.gap');
+
+  function build() {
+    if (tl) tl.kill();
+    gsap.set(['.nav', '.dayhead', '.row', '.gap', '.gap-rule', '.slot-tag',
+              '.hl .line-in', '.gap-sub', '.gap-cta', '.gap-note'], { clearProps: 'all' });
+
+    var rowH = parseFloat(getComputedStyle(root).getPropertyValue('--row-h'));
+
+    // measure the gap's natural (auto) height; .anim CSS parks it at --row-h
+    gap.style.height = 'auto';
+    var openH = gap.offsetHeight;
+    gap.style.height = '';
+
+    tl = gsap.timeline({ defaults: { ease: 'power2.out', duration: 0.5, lazy: false } });
+
+    tl.fromTo('.nav', { autoAlpha: 0, y: -8 }, { autoAlpha: 1, y: 0 })
+      .fromTo('.dayhead', { autoAlpha: 0, y: 8 }, { autoAlpha: 1, y: 0 }, '-=0.3')
+      // the day stamps in, businesslike
+      .fromTo('.row', { autoAlpha: 0, y: 10 },
+              { autoAlpha: 1, y: 0, duration: 0.45, stagger: 0.055 }, '-=0.15')
+      // a beat: the viewer reads a full day…
+      // …then the empty slot yawns open
+      .fromTo(gap, { height: rowH },
+              { height: openH, duration: 1.15, ease: 'power3.inOut',
+                onComplete: function () { gsap.set(gap, { height: 'auto' }); } }, '+=0.55')
+      .fromTo('.gap-rule', { scaleX: 0, autoAlpha: 1 },
+              { scaleX: 1, duration: 0.7, ease: 'power2.inOut', stagger: 0.1 }, '-=0.35')
+      .fromTo('.slot-tag', { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.4 }, '-=0.4')
+      .fromTo('.hl .line-in', { yPercent: 110, autoAlpha: 1 },
+              { yPercent: 0, duration: 0.85, ease: 'power3.out', stagger: 0.12 }, '-=0.3')
+      .fromTo(['.gap-sub', '.gap-cta', '.gap-note'], { autoAlpha: 0, y: 12 },
+              { autoAlpha: 1, y: 0, stagger: 0.09 }, '-=0.5');
+  }
+
+  var built = false;
+  function start() { if (!built) { built = true; build(); } }
+  // wait for fonts so the gap's measured height is correct
+  document.fonts.ready.then(start);
+  setTimeout(start, 1600); // failsafe if fonts hang
+
+  document.querySelector('.replay').addEventListener('click', build);
+})();
+</script>
+</body>
+</html>

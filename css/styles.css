@@ -67,7 +67,7 @@ body[data-theme="light"] {
 
 /* Theme fade: paint-only properties, both scroll directions. */
 body,
-.logo, h1, h2, p, li, a, button, input, label,
+h1, h2, p, li, a, button, input, label,
 .compare-handle .handle-bar {
   transition:
     background-color var(--theme-fade) ease,
@@ -77,27 +77,6 @@ body,
 
 /* ---------- Typography ---------- */
 
-h1 {
-  /* Grown for the poster hero (H1 is now the sole hero element, no sub/counters
-     sharing the section) — max raised 110->128px, but no further: "She searched
-     at 10 PM." (the widest line) only clears the 1400px content-column ceiling
-     below ~132px, so a bigger max silently forced an extra wrap at literally
-     every desktop width tested, including well past 1440px. The 8.5vw
-     coefficient and 56px min are unchanged from before — both already verified
-     safe down to ~640px viewports; only the max needed reconsidering here.
-     Verified empirically (not estimated) by scanning 481-1920px. */
-  font-size: clamp(56px, 8.5vw, 128px);
-  font-weight: 550; /* lines 1-2: within the requested 500-600 band */
-  letter-spacing: -0.03em;
-  line-height: 1.04;
-}
-/* Line 3 only: poster weight-contrast, near-black and tighter than lines 1-2. */
-.h1-emphasis {
-  font-weight: 850; /* within the requested 800-900 band */
-  letter-spacing: -0.04em; /* within the requested -0.02 to -0.04em band */
-}
-/* Hero text may exceed the 1100px content column (spec: "hero text can go wider"). */
-.hook h1 { max-width: 1400px; }
 h2 {
   font-size: clamp(40px, 5.5vw, 56px);
   font-weight: 700;
@@ -133,25 +112,6 @@ main > section > * {
   max-width: 1100px;
 }
 
-.site-head {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%;
-  padding: 28px 32px;
-  z-index: 10;
-  display: flex;
-  justify-content: center;
-}
-.logo {
-  /* Allowed rose 1/3 — the logo. Charcoal version on light sections (spec). */
-  color: var(--rose);
-  font-weight: 700;
-  font-size: 17px;
-  letter-spacing: 0.04em;
-  text-decoration: none;
-}
-body[data-theme="light"] .logo { color: var(--fg); }
-
 /* ---------- CTAs (only the final one is rose) ---------- */
 
 .cta {
@@ -182,35 +142,261 @@ body[data-theme="light"] .logo { color: var(--fg); }
   outline-offset: 4px;
 }
 
-/* ---------- 01 / The Hook — poster hero: logo + H1 + CTA, nothing else ---------- */
+/* ==========================================================================
+   01 / The Hook — hero v10 transplant (reference: prototypes/hero-v10.html)
+   Verbatim prototype CSS, scoped: every rule prefixed with .hero except the
+   .statusbar rules (fixed site chrome, lives outside .hero). Values unchanged.
+   ========================================================================== */
 
-.hook {
+:root {
+  --ink: #17161A;
+  --grey-1: #6E6A73;   /* muted text on white */
+  --grey-2: #E9E7EB;   /* hairlines, surfaces, muted text on ink */
+  --font-ui: "Hanken Grotesk", system-ui, sans-serif;
+  --font-display: "Gloock", serif;
+  --sb-h: 56px;
+}
+
+/* Prototype <body> base moved onto .hero. position/overflow contain the wipe;
+   display/padding/text-align/font metrics undo the site's main>section layout
+   and body type defaults, which the prototype never sat inside. */
+.hero {
+  font-family: var(--font-ui);
+  background: var(--white);
+  color: var(--ink);
+  min-height: 100dvh;
   position: relative;
-  overflow: hidden; /* contains the grain layer cleanly at the section's edges */
-  /* Atmospheric depth so the charcoal stops reading as a flat wall — center is
-     ~7% lighter, far edge ~5% darker than base charcoal (#17161A), within the
-     requested 3-8% variance. Edges are subtle enough to still blend with the
-     flat charcoal of the sections above/below at the section boundary. */
-  background: radial-gradient(120% 90% at 50% 38%, #1e1d24 0%, var(--charcoal) 60%, #131218 100%);
+  overflow: hidden;
+  display: block;
+  padding: 0;
+  text-align: left;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: normal;
 }
-/* Faint grain (optional per spec) — a low-frequency SVG turbulence, ~3.5% opacity.
-   Negative z-index: paints above .hook's own background but below the h1/CTA
-   text (in-flow static content always paints above negative-z-index siblings). */
-.hook::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  opacity: 0.035;
-  pointer-events: none;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
-  background-size: 180px 180px;
+.hero[data-theme="night"] { background: var(--ink); color: var(--white); }
+/* Undo main>section>*'s width:100%/max-width:1100px — it would cap .stage and
+   the wipe at 1100px on wide viewports. */
+.hero > * { width: auto; max-width: none; }
+
+/* Prototype button base, scoped (the site has no global button reset). */
+.hero button, .statusbar button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+.hero :focus-visible, .statusbar :focus-visible { outline: 2px solid var(--rose); outline-offset: 3px; border-radius: 4px; }
+
+/* ---------- status bar : the page IS the device ---------- */
+.statusbar{
+  position:fixed;inset:0 0 auto 0;height:var(--sb-h);z-index:40;
+  display:flex;align-items:center;gap:16px;
+  padding:0 clamp(16px,3vw,32px);
+  font-weight:600;font-size:15px;
+  font-feature-settings:"tnum" 1;
+  /* inherited from the prototype body, now set directly (it sits outside .hero) */
+  font-family:var(--font-ui);
+  color:var(--ink);
+  line-height:normal;
 }
-/* Staggered fade+rise on load — H1 leads, CTA follows a beat later. Both are
-   already in the first viewport, so the reveal observer fires immediately on
-   page load rather than waiting for scroll. */
-.hook h1[data-reveal] { transition-delay: 0.1s; }
-.hook .hero-cta-row[data-reveal] { transition-delay: 0.45s; }
+.statusbar[data-theme="night"]{color:var(--white)}
+.sb-time{display:flex;align-items:baseline;gap:4px}
+.sb-ampm{font-size:11px;font-weight:700;letter-spacing:.08em}
+.sb-date{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;opacity:.62}
+.sb-spacer{flex:1}
+.sb-icons{display:flex;align-items:center;gap:9px}
+.sb-icons svg{display:block}
+.sb-replay{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:32px;height:32px;border-radius:50%;
+  transition:background-color .2s;
+}
+.sb-replay:hover{background:rgba(127,127,127,.14)}
+.statusbar.static .sb-replay{display:none}
+
+/* ---------- stage : scenes stack in one grid cell ---------- */
+.hero .stage{
+  display:grid;min-height:100dvh;
+  padding-top:var(--sb-h);
+}
+.hero .scene{grid-area:1/1;display:flex;flex-direction:column;justify-content:center}
+
+/* default (no JS / reduced motion) = final state; JS flips these */
+.hero .scene--thread,.hero .scene--book{opacity:0;visibility:hidden}
+
+/* ---------- scene 1 : the thread ---------- */
+.hero .scene--thread{align-items:center;padding:24px}
+.hero .thread{width:min(430px,100%)}
+.hero .thread-head{
+  display:flex;align-items:center;gap:12px;
+  padding-bottom:18px;margin-bottom:26px;
+  border-bottom:1px solid rgba(255,255,255,.12);
+}
+.hero .th-back{opacity:.55;flex:none}
+.hero .avatar{
+  width:40px;height:40px;border-radius:50%;flex:none;
+  display:grid;place-items:center;
+  background:rgba(255,255,255,.1);
+  font-weight:700;font-size:15px;
+}
+.hero .th-name{font-weight:700;font-size:15px}
+.hero .th-presence{font-size:12.5px;color:var(--grey-2);opacity:.72;margin-top:2px}
+
+.hero .msg{
+  align-self:flex-end;margin-left:auto;max-width:82%;
+  background:rgba(255,255,255,.1);
+  padding:12px 16px;border-radius:20px 20px 5px 20px;
+  font-size:15.5px;line-height:1.45;
+}
+.hero .msg-meta{
+  text-align:right;font-size:11.5px;color:var(--grey-2);opacity:.62;
+  margin:7px 4px 0 0;font-feature-settings:"tnum" 1;
+}
+.hero .chip-away{
+  align-self:center;text-align:center;
+  margin:26px auto;width:fit-content;
+  font-size:12px;letter-spacing:.02em;color:var(--grey-2);opacity:.72;
+  border:1px solid rgba(255,255,255,.16);
+  padding:7px 14px;border-radius:99px;
+}
+.hero .thread-body{display:flex;flex-direction:column}
+.hero .m2{margin-top:8px}
+
+/* ---------- the wipe ---------- */
+/* scoping: absolute (was fixed) so the rose wipe only ever covers the hero */
+.hero .wipe{
+  position:absolute;inset:0;z-index:60;background:var(--rose);
+  visibility:hidden;pointer-events:none;
+}
+
+/* ---------- scene 2 : the booking sheet ---------- */
+.hero .scene--book{align-items:center;padding:24px}
+.hero .book-caption{
+  font-size:11.5px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--grey-1);margin-bottom:20px;text-align:center;
+  font-feature-settings:"tnum" 1;
+}
+.hero .book-caption b{color:var(--rose)}
+.hero .sheet{
+  position:relative;width:min(410px,100%);
+  background:var(--white);
+  border:1px solid var(--grey-2);border-radius:22px;
+  box-shadow:0 24px 60px -24px rgba(23,22,26,.18);
+  padding:24px;min-height:396px;
+}
+.hero .sheet-head{display:flex;align-items:center;gap:12px;padding-bottom:18px;border-bottom:1px solid var(--grey-2)}
+.hero .sheet-head .avatar{background:var(--ink);color:var(--white)}
+.hero .sh-name{font-weight:700;font-size:15px}
+.hero .sh-status{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--grey-1);margin-top:2px}
+.hero .dot{width:7px;height:7px;border-radius:50%;background:var(--rose);flex:none}
+
+.hero .row{display:flex;justify-content:space-between;align-items:baseline;padding:15px 0;border-bottom:1px solid var(--grey-2)}
+.hero .row-label{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--grey-1)}
+.hero .row-value{font-weight:600;font-size:15px}
+
+.hero .chips{display:flex;flex-wrap:wrap;gap:9px;padding:18px 0 22px}
+.hero .chip{
+  position:relative;overflow:hidden;
+  font-size:14px;font-weight:600;font-feature-settings:"tnum" 1;
+  padding:10px 14px;border-radius:12px;
+  border:1px solid var(--grey-2);color:var(--ink);
+  transition:background-color .25s,border-color .25s,color .25s;
+}
+.hero .chip.is-selected{background:var(--rose);border-color:var(--rose);color:var(--white)}
+.hero .tap{
+  position:absolute;left:50%;top:50%;width:70px;height:70px;margin:-35px 0 0 -35px;
+  border-radius:50%;background:currentColor;opacity:0;pointer-events:none;
+}
+.hero .confirm-btn{
+  position:relative;overflow:hidden;display:block;width:100%;
+  background:var(--rose);color:var(--white);
+  font-weight:700;font-size:15.5px;letter-spacing:.01em;
+  padding:16px;border-radius:14px;
+}
+
+.hero .sheet-done{
+  position:absolute;inset:0;border-radius:22px;background:var(--white);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:24px;gap:6px;
+  opacity:0;visibility:hidden;
+}
+.hero .check{margin-bottom:12px}
+.hero .done-h{font-weight:700;font-size:19px}
+.hero .done-sub{font-size:14px;color:var(--grey-1);font-feature-settings:"tnum" 1}
+
+/* ---------- scene 3 : the pitch ---------- */
+.hero .scene--pitch{padding:calc(var(--sb-h) * .3) 24px 48px}
+.hero .pitch{
+  width:min(1120px,100%);margin:0 auto;
+  display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);
+  gap:clamp(32px,5vw,80px);align-items:center;
+}
+.hero .p-eyebrow{
+  font-size:12px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--grey-1);margin-bottom:26px;
+}
+.hero .p-eyebrow b{color:var(--rose)}
+.hero h1{
+  font-family:var(--font-display);font-weight:400;
+  font-size:clamp(2.55rem,5.6vw,5rem);
+  line-height:1.08;letter-spacing:-.01em;
+}
+.hero .line{display:block;overflow:hidden;padding-bottom:.06em;margin-bottom:-.06em}
+.hero .line-inner{display:block}
+.hero .l2 .line-inner{color:var(--rose)}
+.hero .p-sub{
+  margin:28px 0 36px;max-width:52ch;
+  font-size:clamp(1rem,1.25vw,1.13rem);line-height:1.65;color:var(--grey-1);
+}
+.hero .p-sub strong{color:var(--ink);font-weight:700}
+.hero .p-actions{display:flex;flex-wrap:wrap;align-items:center;gap:14px}
+.hero .cta{
+  display:inline-block;background:var(--rose);color:var(--white);
+  font-weight:700;font-size:16px;
+  padding:17px 30px;border-radius:14px;
+  text-decoration:none;
+  transition:transform .18s,box-shadow .18s;
+  box-shadow:0 14px 30px -14px rgba(181,83,109,.55);
+  border:0; /* counters the site-wide .cta's 1px border */
+}
+.hero .cta:hover{transform:translateY(-2px);box-shadow:0 18px 34px -14px rgba(181,83,109,.65);opacity:1 /* counters site-wide .cta:hover{opacity:.8} */}
+.hero .p-replay{
+  display:inline-flex;align-items:center;gap:8px;
+  font-weight:600;font-size:14.5px;color:var(--grey-1);
+  padding:12px 16px;border-radius:12px;
+  transition:color .2s;
+}
+.hero .p-replay:hover{color:var(--ink)}
+.hero.static .p-replay{display:none}
+
+.hero .p-card{
+  background:var(--white);
+  border:1px solid var(--grey-2);border-radius:20px;
+  box-shadow:0 24px 60px -24px rgba(23,22,26,.18);
+  padding:22px 24px;max-width:380px;justify-self:end;width:100%;
+}
+.hero .pc-head{
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+  font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--grey-1);padding-bottom:14px;border-bottom:1px solid var(--grey-2);
+  font-feature-settings:"tnum" 1;
+}
+.hero .pc-head b{color:var(--rose);white-space:nowrap}
+.hero .pc-body{display:flex;align-items:center;gap:14px;padding:18px 0 14px}
+.hero .pc-check{flex:none}
+.hero .pc-when{font-weight:700;font-size:16.5px}
+.hero .pc-what{font-size:13.5px;color:var(--grey-1);margin-top:3px}
+.hero .pc-foot{font-size:13px;color:var(--grey-1);border-top:1px solid var(--grey-2);padding-top:14px}
+
+/* ---------- hero responsive ---------- */
+@media (max-width:760px){
+  /* scoping: no statusbar at all on mobile, and no dead space where it was */
+  .statusbar{display:none}
+  .hero{--sb-h:0px}
+  .sb-date{display:none}
+  .hero .pitch{grid-template-columns:1fr;gap:28px}
+  .hero .p-card{order:-1;justify-self:start;max-width:340px;padding:16px 18px}
+  .hero .pc-body{padding:14px 0 12px}
+  .hero .p-eyebrow{margin-bottom:18px}
+  .hero .p-sub{margin:20px 0 28px}
+  .hero .cta{width:100%;text-align:center}
+}
 
 /* ---------- Proof strip — quiet supporting stats between Hero and Diagnosis ---------- */
 
@@ -650,17 +836,12 @@ html.js [data-reveal].in {
 
 @media (max-width: 480px) {
   main > section { gap: 2rem; padding-top: 96px; }
-  /* Poster H1 also grows on mobile, per "reconsider its scale" — still a hair
-     under h1's own floor-vs-line-3-weight balance; verified against wrapping. */
-  h1 { font-size: clamp(44px, 13.5vw, 64px); letter-spacing: -0.035em; }
-  .h1-emphasis { letter-spacing: -0.045em; }
   /* Counters: one compact horizontal row, now living in the quiet proof-strip. */
   .counters { gap: 12px; align-items: flex-start; }
   .counter { flex: 1 1 0; min-width: 0; max-width: none; }
   .counter-num { font-size: 14px; } /* smaller than before, matches the quieter strip */
   .counter-desc { font-size: 11px; margin-top: 8px; }
   .counter-source { font-size: 10px; }
-  .site-head { padding: 20px; }
 }
 
 /* ---------- Reduced motion: final states, no animation ---------- */
