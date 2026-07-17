@@ -15,8 +15,8 @@
 <body data-theme="dark">
 
   <!-- device chrome — permanent fixed site chrome on desktop (hidden ≤760px).
-       data-theme / .static are toggled here in sync with the hero's scenes. -->
-  <header class="statusbar static" data-theme="day">
+       .static is toggled here in sync with the hero; the theme stays night. -->
+  <header class="statusbar static" data-theme="night">
     <span class="sb-time"><span class="sb-clock" id="sbClock">10:05</span><span class="sb-ampm">PM</span></span>
     <span class="sb-date">Thu · Jul 16</span>
     <span class="sb-spacer"></span>
@@ -33,7 +33,7 @@
   <main>
 
     <!-- ============ [ 01 / THE HOOK ] — hero v10 transplant ("10:04 PM, twice") ============ -->
-    <section id="hook" class="hero static" data-theme="day">
+    <section id="hook" class="hero static" data-theme="night">
 
       <div class="wipe" id="wipe" aria-hidden="true"></div>
 
@@ -413,7 +413,6 @@
     .addLabel('wipe')
     .to('#wipe', {yPercent:0, duration:.5, ease:'power3.in'})
     .call(() => {
-      setTheme('day');
       setClock('10:04');
       gsap.set('#sceneThread', {autoAlpha:0});
       gsap.set('#sceneBook', {autoAlpha:1});
