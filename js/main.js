@@ -134,74 +134,214 @@ if (reducedMotion) {
 })();
 
 /* =========================================================
-   Before/after slider.
-   Drag: handle only, via pointer capture. touch-action:none
-   lives only on the handle, so page scroll is never hijacked.
-   Touch: tap anywhere on the component toggles sides.
-   Keyboard: arrows / Home / End on the handle.
+   03A — The Work demo list. The list is generated entirely
+   from the demos config below; changing a demo only ever
+   means editing its config line. "live" rows are real links
+   (new tab); "soon" rows are focusable but inert — no label,
+   no click. One fixed preview card is reused for every row:
+   it follows the cursor via gsap.quickTo, and under reduced
+   motion (or if GSAP is missing) it docks beside the item
+   with no follow animation. Keyboard focus behaves like
+   hover, with the card docked next to the focused row.
    ========================================================= */
-(function initCompare() {
-  const compare = document.querySelector(".compare");
-  if (!compare) return;
-  const handle = compare.querySelector(".compare-handle");
-  let split = 50;
-  let dragging = false;
+(function initDemoList() {
+  const list = document.getElementById("demoList");
+  const preview = document.getElementById("demoPreview");
+  if (!list || !preview) return;
 
-  function setSplit(value, animate = false) {
-    split = Math.min(95, Math.max(5, value));
-    compare.classList.toggle("toggling", animate && !reducedMotion);
-    compare.style.setProperty("--split", split + "%");
-    handle.setAttribute("aria-valuenow", String(Math.round(split)));
-  }
+  // status "live" → clickable, opens url in a new tab
+  // status "soon" → hover/preview only, no click
+  // image null    → generated placeholder; set a path to use a real image
+  const demos = [
+    { name: "Velora",                 status: "live", url: "[URL-VELORA]", image: null },
+    { name: "Lumina",                 status: "live", url: "[URL-LUMINA]", image: null },
+    { name: "Maelis",                 status: "live", url: "[URL-MAELIS]", image: null },
+    { name: "Dawn",                   status: "soon", url: null, image: null },
+    { name: "Muse",                   status: "soon", url: null, image: null },
+    { name: "Ember",                  status: "soon", url: null, image: null },
+    { name: "Golden Hour",            status: "soon", url: null, image: null },
+    { name: "Bare Beauty",            status: "soon", url: null, image: null },
+    { name: "Where Time Softens",     status: "soon", url: null, image: null },
+    { name: "The Face You Wake With", status: "soon", url: null, image: null },
+  ];
 
-  function splitFromEvent(e) {
-    const rect = compare.getBoundingClientRect();
-    return ((e.clientX - rect.left) / rect.width) * 100;
-  }
+  const faces = preview.querySelectorAll(".face");
+  const mqReduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const hasGsap = typeof window.gsap !== "undefined";
+  const reduced = () => mqReduce.matches || !hasGsap;
 
-  handle.addEventListener("pointerdown", (e) => {
-    dragging = true;
-    handle.setPointerCapture(e.pointerId);
-    compare.classList.remove("toggling");
-    e.preventDefault();
-  });
-  handle.addEventListener("pointermove", (e) => {
-    if (dragging) setSplit(splitFromEvent(e));
-  });
-  const endDrag = () => { dragging = false; };
-  handle.addEventListener("pointerup", endDrag);
-  handle.addEventListener("pointercancel", endDrag);
-
-  handle.addEventListener("keydown", (e) => {
-    const step = { ArrowLeft: -5, ArrowRight: 5 }[e.key];
-    if (step) { setSplit(split + step); e.preventDefault(); }
-    else if (e.key === "Home") { setSplit(5); e.preventDefault(); }
-    else if (e.key === "End") { setSplit(95); e.preventDefault(); }
-  });
-
-  // Tap-to-toggle: touch only, and only a genuine tap (short, still).
-  let tap = null;
-  compare.addEventListener("pointerdown", (e) => {
-    if (e.pointerType === "touch" && e.target !== handle && !handle.contains(e.target)) {
-      tap = { x: e.clientX, y: e.clientY, t: performance.now() };
+  demos.forEach((demo, i) => {
+    const li = document.createElement("li");
+    let el;
+    if (demo.status === "live" && demo.url) {
+      el = document.createElement("a");
+      el.href = demo.url;
+      el.target = "_blank";
+      el.rel = "noopener";
+    } else {
+      el = document.createElement("span");
+      el.tabIndex = 0;
     }
-  });
-  compare.addEventListener("pointerup", (e) => {
-    if (!tap || e.pointerType !== "touch") return;
-    const moved = Math.hypot(e.clientX - tap.x, e.clientY - tap.y);
-    const elapsed = performance.now() - tap.t;
-    tap = null;
-    if (moved < 10 && elapsed < 300) setSplit(split < 50 ? 88 : 12, true);
+    el.className = "demo-item";
+    el.textContent = demo.name;
+    el.dataset.index = i;
+    li.appendChild(el);
+    list.appendChild(li);
   });
 
-  // Caption: Drag vs Tap by input type; hybrids get whichever they actually use.
-  const caption = document.querySelector(".compare-caption");
-  const setCaption = (mode) => { caption.textContent = caption.dataset["caption" + (mode === "tap" ? "Tap" : "Drag")]; };
-  if (window.matchMedia("(pointer: coarse)").matches) setCaption("tap");
-  window.addEventListener("pointerdown", (e) => {
-    if (e.pointerType === "touch") setCaption("tap");
-    else if (e.pointerType === "mouse") setCaption("drag");
-  }, { passive: true, capture: true });
+  // Placeholder: deterministic gradient per index (site palette only, with a
+  // whisper of rose), demo name small in the corner.
+  function buildContent(i) {
+    const demo = demos[i];
+    if (demo.image) {
+      const img = document.createElement("img");
+      img.src = demo.image;
+      img.alt = "";
+      return img;
+    }
+    const ph = document.createElement("div");
+    ph.className = "demo-ph";
+    const angle = 115 + (i * 37) % 90;
+    const rosePct = [0, 4, 8, 6][i % 4];
+    const end = `color-mix(in srgb, var(--grey-2) ${100 - rosePct}%, var(--rose) ${rosePct}%)`;
+    ph.style.background = `linear-gradient(${angle}deg, var(--white) 0%, ${end} 100%)`;
+    const label = document.createElement("span");
+    label.className = "demo-ph-label";
+    label.textContent = demo.name;
+    ph.appendChild(label);
+    return ph;
+  }
+
+  let quickX, quickY;
+  if (hasGsap) {
+    quickX = gsap.quickTo(preview, "x", { duration: 0.55, ease: "power3" });
+    quickY = gsap.quickTo(preview, "y", { duration: 0.55, ease: "power3" });
+  }
+
+  let mx = 0, my = 0;
+  let visible = false;
+  let currentIndex = -1;
+  let front = 0;
+
+  const clamp = (v, min, max) => Math.max(min, Math.min(v, max));
+
+  function cursorTarget() {
+    const w = preview.offsetWidth, h = preview.offsetHeight;
+    let x = mx + 28;
+    if (x + w > innerWidth - 16) x = mx - w - 28;
+    return {
+      x: clamp(x, 16, innerWidth - w - 16),
+      y: clamp(my - h / 2, 16, innerHeight - h - 16),
+    };
+  }
+
+  function itemTarget(item) {
+    const w = preview.offsetWidth, h = preview.offsetHeight;
+    const r = item.getBoundingClientRect();
+    return {
+      x: clamp(r.right + 24, 16, innerWidth - w - 16),
+      y: clamp(r.top + r.height / 2 - h / 2, 16, innerHeight - h - 16),
+    };
+  }
+
+  function snapTo(t) {
+    if (hasGsap) {
+      quickX(t.x);
+      quickY(t.y);
+      if (quickX.tween) quickX.tween.progress(1);
+      if (quickY.tween) quickY.tween.progress(1);
+    } else {
+      preview.style.transform = `translate(${t.x}px, ${t.y}px)`;
+    }
+  }
+
+  function showFor(item, docked) {
+    const i = +item.dataset.index;
+    if (i === currentIndex && visible) return;
+
+    const wasVisible = visible;
+    currentIndex = i;
+    visible = true;
+
+    const next = faces[1 - front];
+    const prev = faces[front];
+    next.replaceChildren(buildContent(i));
+    front = 1 - front;
+
+    if (reduced()) {
+      next.style.opacity = 1;
+      prev.style.opacity = 0;
+      snapTo(itemTarget(item));
+      preview.style.opacity = 1;
+      preview.style.visibility = "visible";
+      if (hasGsap) gsap.set(preview, { scale: 1 });
+      return;
+    }
+
+    if (!wasVisible) {
+      gsap.set(next, { opacity: 1 });
+      gsap.set(prev, { opacity: 0 });
+      snapTo(docked ? itemTarget(item) : cursorTarget());
+      gsap.set(preview, { scale: 0.9 });
+      gsap.to(preview, { autoAlpha: 1, scale: 1, duration: 0.35, ease: "power2.out", overwrite: "auto" });
+    } else {
+      gsap.set(next, { opacity: 0 });
+      gsap.to(next, { opacity: 1, duration: 0.25, ease: "power1.out", overwrite: "auto" });
+      gsap.to(prev, { opacity: 0, duration: 0.25, ease: "power1.out", overwrite: "auto" });
+      gsap.fromTo(preview, { scale: 0.97 }, { scale: 1, duration: 0.3, ease: "power2.out", overwrite: "auto" });
+      if (docked) snapTo(itemTarget(item));
+    }
+  }
+
+  function hide() {
+    if (!visible) return;
+    visible = false;
+    currentIndex = -1;
+    if (reduced()) {
+      preview.style.opacity = 0;
+      preview.style.visibility = "hidden";
+    } else {
+      gsap.to(preview, { autoAlpha: 0, scale: 0.92, duration: 0.3, ease: "power2.out", overwrite: "auto" });
+    }
+  }
+
+  list.addEventListener("mouseover", (e) => {
+    const item = e.target.closest(".demo-item");
+    if (!item) return;
+    mx = e.clientX;
+    my = e.clientY;
+    showFor(item, reduced());
+  });
+
+  list.addEventListener("mousemove", (e) => {
+    mx = e.clientX;
+    my = e.clientY;
+    if (!visible || reduced()) return;
+    const t = cursorTarget();
+    quickX(t.x);
+    quickY(t.y);
+  });
+
+  list.addEventListener("mouseleave", hide);
+
+  list.addEventListener("focusin", (e) => {
+    const item = e.target.closest(".demo-item");
+    if (!item || !item.matches(":focus-visible")) return;
+    showFor(item, true);
+  });
+
+  list.addEventListener("focusout", (e) => {
+    if (!list.contains(e.relatedTarget)) hide();
+  });
+
+  // Reset cleanly if the motion preference flips mid-session.
+  mqReduce.addEventListener("change", () => {
+    if (hasGsap) gsap.killTweensOf([preview, ...faces]);
+    preview.style.opacity = 0;
+    preview.style.visibility = "hidden";
+    visible = false;
+    currentIndex = -1;
+  });
 })();
 
 /* =========================================================

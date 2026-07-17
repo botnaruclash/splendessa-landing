@@ -221,34 +221,23 @@
       </div>
     </section>
 
-    <!-- ============ [ TRANSITION ] — full viewport, one line ============ -->
-    <section class="flip" data-zone="dark">
-      <p class="flip-line" data-reveal>07:42 — you wake up.</p>
-    </section>
+    <!-- ============ [ 03A / THE WORK ] — white: typographic demo list ============ -->
+    <section class="worklist" id="work" data-zone="light">
+      <header class="worklist-head" data-reveal>
+        <p class="worklist-kicker">The Standard</p>
+        <p class="worklist-intro">Never the same twice.</p>
+      </header>
 
-    <!-- ============ [ 03A / THE DIFFERENCE ] — white ============ -->
-    <section class="difference" id="difference" data-zone="light">
-      <h2 data-reveal>Same clinic. Same prices.<br>Different first impression.</h2>
+      <!-- Built entirely from the demos config in js/main.js (initDemoList) —
+           to change a demo, edit its config line there, never this markup. -->
+      <ul class="demo-list" id="demoList" data-reveal></ul>
 
-      <div class="compare" data-reveal>
-        <!-- AFTER: base layer. Same file reused verbatim in 03B below. -->
-        <div class="pane pane-after" aria-hidden="true">
-          <img class="pane-img" src="assets/img/velora-after.webp" alt="" width="1280" height="690" loading="lazy">
-        </div>
-        <!-- BEFORE: top layer, clipped by --split. Slightly desaturated by CSS per spec. -->
-        <div class="pane pane-before" aria-hidden="true">
-          <img class="pane-img" src="assets/img/before-composite.webp" alt="" width="1280" height="560" loading="lazy">
-        </div>
-        <div class="compare-handle" role="slider" tabindex="0"
-             aria-label="Compare before and after"
-             aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
-          <span class="handle-bar" aria-hidden="true"></span>
-        </div>
+      <!-- Single reused hover preview card. Follows the cursor on fine pointers;
+           docks beside the item under keyboard focus or reduced motion. -->
+      <div class="demo-preview" id="demoPreview" aria-hidden="true">
+        <div class="face"></div>
+        <div class="face"></div>
       </div>
-
-      <p class="compare-caption"
-         data-caption-drag="Drag. That's the entire pitch."
-         data-caption-tap="Tap. That's the entire pitch.">Drag. That's the entire pitch.</p>
     </section>
 
     <!-- ============ [ 03B / THE STANDARD ] — white ============ -->
@@ -496,8 +485,7 @@
     ['#hook',        0],        // hero bottom · 10:05 PM
     ['#proof-strip', 35],       // 10:40 PM
     ['#diagnosis',   75],       // 11:20 PM — matches the DM phone's clock
-    ['.flip',        650],      // 8:55 AM next day — the night fast-forward
-    ['#difference',  655],      // 9:00 AM — "away · opens 9:00 AM"
+    ['#work',        655],      // 9:00 AM — the night fast-forwards across the demo list
     ['#standard',    657],      // 9:02 AM
     ['#ultimatum',   660, 40],  // 9:05 AM locks just inside the section — safely before
                                 // the bar's 56px line at flush scroll, so anchor links land on 9:05
