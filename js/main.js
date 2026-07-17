@@ -12,8 +12,10 @@ const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matc
 document.documentElement.classList.add("js");
 
 /* =========================================================
-   Hero counters — 75 and 46 count up. The 0 is NOT here:
-   it has no data attribute, no selector matches it, ever.
+   Diagnosis counters — 75 and 46 count up once the stats band
+   scrolls into view. The 0 is NOT here: it has no data
+   attribute, no selector matches it, ever. Under reduced
+   motion nothing runs — final values live in the HTML.
    ========================================================= */
 function animateCounters() {
   const els = document.querySelectorAll("[data-count]");
@@ -34,11 +36,23 @@ function animateCounters() {
     requestAnimationFrame(tick);
   });
 }
-// Wait for the real font (avoids a mid-count metric swap), but never longer than 400ms.
-Promise.race([
-  document.fonts ? document.fonts.ready : Promise.resolve(),
-  new Promise((r) => setTimeout(r, 400)),
-]).then(animateCounters);
+(function initCounters() {
+  const band = document.querySelector("#diagnosis .counters");
+  if (!band || reducedMotion) return;
+  const countObserver = new IntersectionObserver(
+    (entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      countObserver.disconnect();
+      // Wait for the real font (avoids a mid-count metric swap), capped at 400ms.
+      Promise.race([
+        document.fonts ? document.fonts.ready : Promise.resolve(),
+        new Promise((r) => setTimeout(r, 400)),
+      ]).then(animateCounters);
+    },
+    { threshold: 0.2 }
+  );
+  countObserver.observe(band);
+})();
 
 /* =========================================================
    Theme zones — charcoal ⇄ white, both scroll directions.
@@ -76,6 +90,48 @@ if (reducedMotion) {
   );
   document.querySelectorAll("[data-reveal]").forEach((el) => revealObserver.observe(el));
 }
+
+/* =========================================================
+   Diagnosis headline — scrubbed word-by-word fill. GSAP +
+   ScrollTrigger load synchronously at the end of index.html,
+   so both exist before this deferred script runs. Words start
+   ~20% white and fill to their exact static colors (white
+   lines → #FFFFFF, muted lines → #A6A3AD = --grey-on-dark),
+   completing as the headline reaches ~center of the viewport.
+   Reduced motion skips this entirely — the markup already
+   carries the final colors.
+   ========================================================= */
+(function initHeadlineFill() {
+  if (reducedMotion || !window.gsap || !window.ScrollTrigger) return;
+  const copy = document.querySelector(".diagnosis-copy");
+  if (!copy) return;
+  gsap.registerPlugin(ScrollTrigger);
+
+  const whiteWords = gsap.utils.toArray(".diagnosis h2 > span:not(.h2-muted) .fill-word");
+  const greyWords = gsap.utils.toArray(".diagnosis h2 > .h2-muted .fill-word");
+
+  gsap.set(whiteWords.concat(greyWords), { color: "rgba(255, 255, 255, 0.2)" });
+
+  gsap.timeline({
+    scrollTrigger: {
+      trigger: copy,
+      start: "clamp(top 85%)",
+      // Complete when the headline is roughly centered (center at 55% of the
+      // viewport), never in less than 240px of scroll, and always within the
+      // page's real scroll bounds.
+      end: () => {
+        const rect = copy.getBoundingClientRect();
+        const center = rect.top + window.scrollY + rect.height / 2;
+        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        return Math.min(maxScroll, Math.max(240, Math.round(center - window.innerHeight * 0.55)));
+      },
+      scrub: true,
+    },
+    defaults: { ease: "none", duration: 0.3 },
+  })
+    .to(whiteWords, { color: "#FFFFFF", stagger: 0.18 })
+    .to(greyWords, { color: "#A6A3AD", stagger: 0.18 }, ">-0.1");
+})();
 
 /* =========================================================
    Before/after slider.

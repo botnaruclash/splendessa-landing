@@ -398,14 +398,15 @@ main > section > * {
   .hero .cta{width:100%;text-align:center}
 }
 
-/* ---------- Proof strip — quiet supporting stats between Hero and Diagnosis ---------- */
+/* ---------- 02 / The Diagnosis: stats band + monumental headline + two phones ---------- */
 
-.proof-strip {
-  min-height: 0; /* override main>section's 100svh: a thin strip, not a full panel */
-  padding-top: clamp(56px, 8vh, 88px);
-  padding-bottom: clamp(56px, 8vh, 88px);
+.diagnosis {
+  gap: 0;                       /* spacing managed per-row below */
+  justify-content: flex-start;  /* bias content upward in tall viewports */
 }
 
+/* Stats band. Numbers are the section's data spine: large, white, dominant.
+   Weight (not color) marks the frozen "0" below. */
 .counters {
   list-style: none;
   display: flex;
@@ -414,28 +415,85 @@ main > section > * {
 }
 .counter { max-width: 240px; }
 .counter-num {
-  /* Deliberately quiet now that this lives in its own proof-strip, not sharing
-     a viewport with the H1 anymore: smaller than before, and muted grey rather
-     than pure white — the strip should read as a quiet footnote, not a rival
-     headline. Weight (not color) still marks the frozen "0" below. */
-  font-size: clamp(16px, 2.2vw, 32px);
+  font-size: clamp(30px, 5vw, 64px);
   font-weight: 500;
   letter-spacing: -0.02em;
   line-height: 1;
   font-variant-numeric: tabular-nums;
-  color: var(--muted);
+  color: var(--fg);
 }
 .counter-unit { font-size: .55em; font-weight: 300; }
 /* The frozen 0: one weight heavier. Deliberate, not broken. */
 .counter-frozen .counter-num { font-weight: 700; }
 .counter-desc {
   font-size: 14px;
-  margin-top: 12px;
-  line-height: 1.45;
+  margin-top: 10px;
+  line-height: 1.4;
 }
-.counter-source { margin-top: 6px; }
+.counter-source { font-size: 12px; margin-top: 6px; }
 
-/* ---------- 02 / The Diagnosis: two layered HTML/CSS phones ---------- */
+/* Headline + phones. Base = stacked (headline over phones); the split needs
+   the untouched phone composition (~664px transformed bounding box) plus the
+   nowrap headline (~0.44 x viewport at 7vw), which only coexist overlap-free
+   from 1280px viewport up (media query below). */
+.diagnosis-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: center;
+  justify-items: center;
+  text-align: center;
+  gap: 48px;
+  padding-top: clamp(72px, 10vh, 128px);
+}
+
+/* Monumental headline: four explicit lines, one span each, never rewrapped. */
+.diagnosis h2 {
+  font-size: clamp(60px, 7vw, 104px);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+}
+.diagnosis h2 > span { display: block; white-space: nowrap; }
+.h2-muted { color: var(--muted); font-weight: 600; }
+
+@media (min-width: 1280px) {
+  .diagnosis-grid {
+    /* Split: headline column hugs its glyphs (max-content + nowrap), phones
+       get their fixed full-size slot, and justify-content centers the pair as
+       one composition. The tilted stages' bounding box bleeds a constant 97px
+       past the column's right edge; padding-right reserves exactly that, so
+       outer left margin (to glyphs) = outer right margin (to phones). */
+    grid-template-columns: max-content 544px;
+    justify-content: center;
+    justify-items: start; /* the base justify-items:center would recenter the
+                             overflowing .phones box and undo margin-left below */
+    max-width: none;
+    padding-right: 97px;
+    text-align: left;
+    /* Equal thirds: outer-left = inner gap = outer-right. Centering already
+       forces outer-left = outer-right for any gap, so the gap solves
+       gap - 25px (bbox left bleed) = margin. Headline width is 5.58em of its
+       clamped size; 591px = 544px column + 97px right bleed - 2 x 25px. */
+    gap: max(24px, calc((100vw - 591px - 5.58 * clamp(60px, 7vw, 104px)) / 3));
+    padding-top: clamp(110px, 14vh, 140px);
+  }
+  /* Anchored at the slot's start + 20px so the DM phone's tilted corner
+     clears the headline's longest line. */
+  .diagnosis .phones { margin-left: 20px; }
+}
+
+/* Reveal stagger: stats -> text -> left phone -> right phone. */
+html.js .diagnosis-copy[data-reveal] { transition-delay: 0.08s; }
+html.js .diagnosis .phone-unit-left[data-reveal] { transition-delay: 0.16s; }
+html.js .diagnosis .phone-unit-right[data-reveal] { transition-delay: 0.24s; }
+
+/* Small screens: keep the four-line stack, shrink so the longest line
+   ("A DM needs") never overflows the 24px gutters. */
+@media (max-width: 440px) {
+  .diagnosis h2 { font-size: clamp(42px, 12vw, 56px); }
+}
+
+/* ---------- The Diagnosis phones: two layered HTML/CSS compositions ---------- */
 
 /* Flex, not grid: a grid's two equal-width columns would center each phone in
    its own ~540px slot at this container's 1100px cap, swallowing any overlap
@@ -448,10 +506,8 @@ main > section > * {
   gap: clamp(0px, 1vw, 12px);
 }
 
-/* One unit = phone + its own caption. z-index here orders the two phones front/
-   back; the actual lean/overlap is applied to .phone-stage (the phone) and the
-   caption is nudged separately — so phones tilt and cross while captions stay
-   upright, legible, and each still sits clearly under its own phone. */
+/* z-index here orders the two phones front/back; the actual lean/overlap is
+   applied to .phone-stage. */
 .phone-unit {
   display: flex;
   flex-direction: column;
@@ -482,10 +538,6 @@ main > section > * {
      above the one it overlaps. */
   filter: drop-shadow(-16px 22px 26px rgba(0, 0, 0, 0.55));
 }
-/* Captions follow their phone's side but by a smaller amount — they stay upright,
-   never collide, and each remains unmistakably under its own phone. */
-.phone-unit-left .phone-caption-block { transform: translateX(16px); }
-.phone-unit-right .phone-caption-block { transform: translateX(-16px); }
 
 /* --- Glow layer (bottom): rose, right phone only, and the dominant light on the
    dark half. Diffused through layered rose box-shadows (soft depth, several radii)
@@ -637,17 +689,6 @@ main > section > * {
 .velora-slot { font-size: 13px; margin-top: 6px; }
 .velora-confirmed { font-weight: 700; font-size: 13px; }
 .velora-time { font-size: 12px; color: var(--grey-on-light); }
-
-/* Caption sits directly under its own phone. */
-.phone-caption-block {
-  margin-top: 26px;
-  text-align: center;
-}
-.phone-caption {
-  font-size: 15px;
-  line-height: 1.55;
-}
-.phone-caption-block .micro { margin-top: 12px; }
 
 /* ---------- Transition / 07:42 ---------- */
 
@@ -823,12 +864,11 @@ html.js [data-reveal].in {
 /* ---------- Responsive ---------- */
 
 @media (max-width: 768px) {
-  .phones { flex-direction: column; align-items: center; gap: 72px; }
-  /* Overlap/lean/island are a desktop-only composition; mobile stays exactly as it
-     was — upright stacked phones, no tilt, no island (pixel-identical to before). */
+  .phones { flex-direction: column; align-items: center; gap: 48px; }
+  /* Overlap/lean/island are a desktop-only composition; mobile gets upright
+     stacked phones, no tilt, no island. */
   .phone-unit-left, .phone-unit-right { z-index: auto; }
   .phone-unit-left .phone-stage, .phone-unit-right .phone-stage { transform: none; filter: none; }
-  .phone-unit-left .phone-caption-block, .phone-unit-right .phone-caption-block { transform: none; }
   .dynamic-island { display: none; }
   .standard-body { grid-template-columns: 1fr; text-align: center; }
   .callouts { justify-items: center; }
@@ -836,11 +876,11 @@ html.js [data-reveal].in {
 
 @media (max-width: 480px) {
   main > section { gap: 2rem; padding-top: 96px; }
-  /* Counters: one compact horizontal row, now living in the quiet proof-strip. */
+  /* Counters: three narrow columns, one horizontal row — never stacked. */
   .counters { gap: 12px; align-items: flex-start; }
   .counter { flex: 1 1 0; min-width: 0; max-width: none; }
-  .counter-num { font-size: 14px; } /* smaller than before, matches the quieter strip */
-  .counter-desc { font-size: 11px; margin-top: 8px; }
+  .counter-num { font-size: 30px; }
+  .counter-desc { font-size: 11.5px; margin-top: 8px; }
   .counter-source { font-size: 10px; }
 }
 
@@ -849,6 +889,7 @@ html.js [data-reveal].in {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     transition-duration: 0.001s !important;
+    transition-delay: 0s !important; /* incl. the diagnosis reveal stagger */
     animation-duration: 0.001s !important;
     animation-iteration-count: 1 !important;
   }

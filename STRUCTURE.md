@@ -1,56 +1,59 @@
-# STRUCTURE.md — Inventar secțiuni index.html
+# STRUCTURE.md — Splendessa Landing (v2)
 
-*Analiză, nu spec. Ordinea = ordinea din pagină. Fiecare secțiune are `data-zone` dark/light — pagina alternează charcoal → alb → charcoal.*
-
----
-
-## Header (`.site-head`)
-- **Rol:** branding minim, ancoră spre top.
-- **Conține:** wordmark text (link spre #hook). Fără nav, fără CTA.
-
-## 01 — Hook (`#hook`, dark)
-- **Rol:** captează atenția cu problema — clientul pierdut noaptea, formulat personal ("not with you").
-- **Conține:** H1 pe trei rânduri (singurul element vizual), CTA ghost.
-- **CTA:** ghost → scroll la #standard ("See the 10 PM Standard ↓").
-
-## Proof Strip (`#proof-strip`, dark)
-- **Rol:** validează problema cu cifre — dovadă statistică imediat după hook.
-- **Conține:** 3 countere cu sursă citată; primele două animate, al treilea ("0") intenționat static și mai greu vizual — e poanta.
-- **CTA:** niciunul.
-
-## 02 — Diagnosis (`#diagnosis`, dark)
-- **Rol:** agită problema vizual — dramatizează scenariul din hero prin comparație directă.
-- **Conține:** două mockup-uri de telefon side-by-side: DM ignorat (stânga) vs. booking confirmat instant pe Velora (dreapta, cu glow rose), fiecare cu caption narativ.
-- **CTA:** niciunul.
-
-## Transition (`.flip`, dark, fără id)
-- **Rol:** pauză dramatică — un singur rând pe viewport întreg, puntea între noapte (problemă) și dimineață (soluție).
-- **Conține:** o linie de text. Atât.
-- **CTA:** niciunul.
-
-## 03A — Difference (`#difference`, light)
-- **Rol:** demonstrează soluția interactiv — "vezi diferența cu mâna ta".
-- **Conține:** H2, slider before/after (accesibil, cu handle keyboard), caption care se adaptează touch/mouse.
-- **CTA:** niciunul explicit — sliderul E pitch-ul.
-
-## 03B — Standard (`#standard`, light)
-- **Rol:** explică ce e produsul — numește oferta ("The 10 PM Standard") și o desface în beneficii.
-- **Conține:** H2, subtitlu, screenshot Velora (același asset ca "after"-ul din slider), 3 callout-uri numerotate (design/booking/SEO), CTA outline.
-- **CTA:** outline → demo live extern (velora.splendessa.com, tab nou).
-
-## 04 — Ultimatum (`#ultimatum`, dark)
-- **Rol:** închide — reia promisiunea din titlu, forțează alegerea, împinge spre booking.
-- **Conține:** linie "quietly handled" (obiecții tehnice rezolvate în treacăt), H2 + subtitlu, CTA principal rose, link secundar care dezvăluie formularul, formular lead 3 câmpuri (clinic/telefon/email) + honeypot, micro-line de încheiere.
-- **CTA principal:** buton rose → Cal.com embed (splendessa/15-min-intro-call). Singurul CTA rose de pe pagină.
-- **CTA secundar:** link → deschide #lead-form (Apps Script → Sheets/Telegram).
+*Locked page structure. Section order = order below. Content, copy, and design details of each section are decided in separate sessions — this file defines ONLY which sections exist, in what order, and what role each plays. Do not add, remove, or reorder sections without an explicit request.*
 
 ---
 
-## Flux
+## 01 — Hero (v10, "10:04 PM, twice")
 
-Hook (problemă, personal) → Proof Strip (cifre care o confirmă) → Diagnosis (agitare vizuală: DM pierdut vs. booking instant) → Transition (respiro: se face dimineață) → Difference (demo interactiv before/after) → Standard (ce primești, 3 beneficii + demo live) → Ultimatum (alegerea + booking Cal.com / formular).
+- **Role:** opens with the story — cinematic auto-play hero in 3 scenes (lost DM → the same minute replayed with an instant confirmed booking → classic hero with H1, stat, CTA).
+- **Fixed notes:** static fallback (scene 3) for no-JS / reduced-motion. The fake status bar does NOT exist on mobile.
+- **Details:** decided in the dedicated hero session.
 
-**Observații pentru discuție:**
-- Un singur drum de conversie, la final — nu există CTA de booking înainte de #ultimatum; hero-ul împinge doar în jos.
-- Rose apare exact de 3 ori, toate cu sens: logo, glow-ul telefonului Velora, butonul final.
-- Secțiunile "de dovadă" (Proof Strip, Diagnosis) vin *înainte* de soluție — structura e problem-agitate-solve clasică, cu proof mutat în faza de agitare, nu după soluție. Nu există testimoniale/social proof clasic.
+## 02 — Diagnosis (mini-section, the numbers)
+
+- **Role:** the consequence in numbers — the statistics that validate the problem acted out in the hero.
+- **Note:** short transitional section, not a large block.
+- **Details:** separate session.
+
+## 03 — The Work (demo list)
+
+- **Role:** visual proof — typographic list in the style of pacomepertant.com with 10 premium demos.
+- **Fixed notes:** clean default state (typography, no visible images); reveal on interaction. Mobile behavior decided separately.
+- **Details (demo names, categories, exact interaction):** separate session.
+
+## 04 — The 10 PM Standard (mini-section, the offer)
+
+- **Role:** names the offer and breaks it into benefits — the bridge between "what I just saw" (the list) and "what I do now" (CTA).
+- **Note:** compact and aesthetic, not a long block.
+- **Details:** separate session.
+
+## 05 — CTA (Ultimatum)
+
+- **Role:** conversion — Cal.com booking (splendessa/15-min-intro-call) + lead form as the alternative path.
+- **Fixed notes:** primary CTA in rose; Apps Script → Sheets/Telegram stays wired.
+- **Details (button animation, adjacent elements):** separate session.
+
+## 06 — Footer
+
+- **Role:** page close — legal (Terms, Privacy), social links, identity.
+- **Details:** separate session.
+
+---
+
+## Flow
+
+Hero v10 (story + stat + CTA) → Diagnosis (numbers) → The Work (demo list) → The 10 PM Standard (offer) → CTA (booking/lead) → Footer.
+
+## Global effects (site-wide, decided in a separate session)
+
+- Clock that advances with scroll (night → morning, tied to the dark→light transition)
+- Background grid with interaction (spotlight or a variant — TBD)
+- Magnetic + animated CTA button
+- Text reveal on scroll (optional)
+
+## General rules
+
+- Design DNA: follow DESIGN.md (typography and rose usage get updated there — not ad-hoc per section).
+- Performance is a sales argument — any effect that slows the page gets cut.
+- One conversion path: the final rose CTA. External links (demos) open in a new tab.

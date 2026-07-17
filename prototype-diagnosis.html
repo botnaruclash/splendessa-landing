@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prototype — Merged Diagnosis (proof-strip + diagnosis)</title>
+  <meta name="robots" content="noindex">
+  <link rel="preload" href="assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- Reuses the live stylesheet so phones + counters render with production styles. -->
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    /* ================================================================
+       PROTOTYPE-ONLY OVERRIDES — merged Diagnosis section.
+       Everything below scopes to .dx; base phone/counter styles come
+       verbatim from css/styles.css.
+       ================================================================ */
+
+    .dx {
+      gap: 0;                       /* spacing managed per-row below */
+      justify-content: flex-start;  /* bias content upward in tall viewports */
+    }
+
+    /* ---- ROW 1: stats band — compact; separation from row 2 is pure
+       whitespace (no hairline), see .dx-grid padding-top ---- */
+    /* Numbers promoted from the quiet strip to the section's data spine:
+       large, white, dominant. The frozen 0 keeps its extra weight via the
+       existing .counter-frozen rule (500 vs 700). */
+    .dx .counter-num {
+      font-size: clamp(30px, 5vw, 64px);
+      font-weight: 500;
+      color: var(--fg);
+    }
+    .dx .counter-desc {
+      font-size: 14px;
+      margin-top: 10px;
+      line-height: 1.4;
+      color: var(--fg);
+    }
+    .dx .counter-source {
+      font-size: 12px;
+      margin-top: 6px;
+    }
+
+    /* ---- ROW 2 ---- */
+    /* Base = stacked (headline over phones), used below 1160px. The untouched
+       production phone composition occupies a ~664px-wide transformed bounding
+       box; with the nowrap headline (6.3em ≈ 0.38 × viewport at 6vw) the split
+       only coexists overlap-free, scroll-free from ~1160px viewport up. */
+    .dx-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      align-items: center;
+      justify-items: center;
+      text-align: center;
+      gap: 48px;
+      padding-top: clamp(72px, 10vh, 128px);
+    }
+
+    /* Monumental headline: four explicit lines, one span each, never
+       rewrapped. Inter (site font) throughout. */
+    .dx .dx-h2 {
+      font-size: clamp(60px, 7vw, 104px);
+      font-weight: 700;
+      line-height: 1.02;
+      letter-spacing: -0.03em;
+    }
+    .dx-h2 > span { display: block; white-space: nowrap; }
+    .dx-h2-muted { color: var(--muted); font-weight: 600; }
+
+    @media (min-width: 1280px) {
+      /* Split: phones own a fixed full-size column (production composition,
+         no scaling — the tilted stages' corners bleed past the column edges
+         by design). The 100vw-128px cap keeps that right-side bleed inside
+         the viewport, so no horizontal scroll. Headline takes the rest,
+         flush left. At 7vw the headline needs ~0.44 × viewport, which is why
+         the split starts at 1280px. */
+      .dx-grid {
+        /* Headline column hugs its glyphs (max-content + nowrap), phones get
+           their fixed slot, and justify-content centers the pair as one
+           composition. The phones are pushed to the right edge of their slot
+           (rule below) so the DM phone's tilted corner clears the headline's
+           longest line; that puts the stages' bounding-box bleed past the
+           column's right edge at a constant 97px — padding-right reserves
+           exactly that, so outer left margin (to glyphs) = outer right margin
+           (to phones). */
+        grid-template-columns: max-content 544px;
+        justify-content: center;
+        justify-items: start; /* items anchor at column start — the base
+                                 justify-items:center would otherwise recenter
+                                 the overflowing .phones box and undo the
+                                 margin-left offset below */
+        max-width: none;
+        padding-right: 97px;
+        text-align: left;
+        /* Equal thirds: outer-left = inner gap = outer-right. The centering
+           above already forces outer-left = outer-right for any gap, so the
+           gap solves gap-25px (bbox left bleed) = margin. Headline width is
+           5.58em of its clamped size; 591px = 544px column + 97px right
+           bleed - 50px (2 x 25px left bleed). */
+        gap: max(24px, calc((100vw - 591px - 5.58 * clamp(60px, 7vw, 104px)) / 3));
+        padding-top: clamp(110px, 14vh, 140px);
+      }
+      .dx .phones {
+        margin-left: 20px;
+      }
+    }
+
+    /* Reveal stagger: stats → text → left phone → right phone. */
+    html.js .dx-copy[data-reveal] { transition-delay: 0.08s; }
+    html.js .dx .phone-unit-left[data-reveal] { transition-delay: 0.16s; }
+    html.js .dx .phone-unit-right[data-reveal] { transition-delay: 0.24s; }
+
+    /* Small screens: keep the four-line stack, shrink so the longest line
+       ("A DM needs" ≈ 6.3em) never overflows the 24px gutters — the 60px
+       base floor would at ≤440px. */
+    @media (max-width: 440px) {
+      .dx .dx-h2 { font-size: clamp(42px, 12vw, 56px); }
+    }
+
+    /* ---- Mobile: phones stack vertically (styles.css unsets the tilt) ---- */
+    @media (max-width: 768px) {
+      /* Captions are gone, so the stacked phones need less air than the
+         production 72px. */
+      .dx .phones { gap: 48px; }
+    }
+    @media (max-width: 480px) {
+      /* styles.css already forces one horizontal row of three columns here
+         (.counter { flex: 1 1 0 }); these sizes keep the numbers dominant
+         at 390px instead of the old quiet-strip 14px. */
+      .dx .counter-num { font-size: 30px; }
+      .dx .counter-desc { font-size: 11.5px; margin-top: 8px; }
+      .dx .counter-source { font-size: 10px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html.js .dx [data-reveal] { transition-delay: 0s !important; }
+    }
+  </style>
+</head>
+<body data-theme="dark">
+
+  <main>
+
+    <!-- ============ MERGED [ PROOF STRIP + 02 / THE DIAGNOSIS ] — dark ============ -->
+    <section class="dx" id="diagnosis-merged" data-zone="dark">
+
+      <!-- ROW 1 · stats band (markup reused from #proof-strip, labels shortened) -->
+      <div class="dx-stats" data-reveal>
+        <ul class="counters">
+          <li class="counter">
+            <p class="counter-num"><span data-count="75">75</span><span class="counter-unit">%</span></p>
+            <p class="counter-desc">judge by website alone</p>
+            <p class="counter-source">Stanford</p>
+          </li>
+          <li class="counter">
+            <p class="counter-num"><span data-count="46">46</span><span class="counter-unit">%</span></p>
+            <p class="counter-desc">of bookings happen after close</p>
+            <p class="counter-source">Phorest, 5,000+ spas</p>
+          </li>
+          <li class="counter counter-frozen">
+            <!-- The 0 has NO data attribute and NO JS hook. It renders statically,
+                 instantly, one weight heavier. Never animate it. -->
+            <p class="counter-num">0</p>
+            <p class="counter-desc">will wait until morning</p>
+            <p class="counter-source">source: your inbox</p>
+          </li>
+        </ul>
+      </div>
+
+      <!-- ROW 2 · split grid -->
+      <div class="dx-grid">
+
+        <div class="dx-copy" data-reveal>
+          <h2 class="dx-h2">
+            <!-- Word spans carry final colors in static CSS; the scroll-fill
+                 script (skipped under reduced motion) dims then fills them. -->
+            <span><span class="dx-w">A</span> <span class="dx-w">DM</span> <span class="dx-w">needs</span></span>
+            <span><span class="dx-w">you</span> <span class="dx-w">awake.</span></span>
+            <span class="dx-h2-muted"><span class="dx-w">A</span> <span class="dx-w">system</span></span>
+            <span class="dx-h2-muted"><span class="dx-w">doesn't.</span></span>
+          </h2>
+        </div>
+
+        <!-- Phones reused verbatim from #diagnosis (captions removed). -->
+        <div class="phones">
+
+          <figure class="phone-unit phone-unit-left" data-reveal>
+            <!-- Layered on purpose: glow / frame / screen are separate elements so a
+                 future animation pass can move each independently. -->
+            <div class="phone-stage">
+              <div class="phone phone-dm" role="img"
+                   aria-label="Instagram direct message sent at night, seen 13 hours later, never answered">
+                <span class="dynamic-island" aria-hidden="true"></span>
+                <div class="phone-screen screen-dm">
+                  <p class="screen-status">11:20</p>
+                  <div class="dm-header">
+                    <span class="dm-avatar" aria-hidden="true"></span>
+                    <span class="dm-name">yourclinic</span>
+                  </div>
+                  <div class="dm-thread">
+                    <p class="dm-bubble">Hi! How much is laser hair removal?</p>
+                    <p class="dm-receipt">Seen 13h ago</p>
+                  </div>
+                  <p class="dm-input">Message…</p>
+                </div>
+              </div>
+            </div>
+          </figure>
+
+          <figure class="phone-unit phone-unit-right" data-reveal>
+            <div class="phone-stage">
+              <!-- Rose glow = allowed rose instance 2 of 3. The only light source on the dark half. -->
+              <span class="phone-glow" aria-hidden="true"></span>
+              <div class="phone phone-velora" role="img" aria-label="Velora booking confirmation at 22:26">
+                <span class="dynamic-island" aria-hidden="true"></span>
+                <div class="phone-screen screen-velora">
+                  <p class="screen-status">22:26</p>
+                  <p class="velora-url">velora.splendessa.com</p>
+                  <div class="velora-booking">
+                    <p class="velora-mark">Velora</p>
+                    <p class="velora-service">Laser Hair Removal</p>
+                    <p class="velora-slot">Tomorrow, 2:00 PM</p>
+                    <p class="velora-confirmed">Booking confirmed ✓</p>
+                    <p class="velora-time">22:26</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </figure>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
+<script>
+/* Same reveal mechanics as js/main.js — fade + 14px rise, once, and instant
+   final states under prefers-reduced-motion. */
+document.documentElement.classList.add("js");
+(function () {
+  var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var targets = document.querySelectorAll("[data-reveal]");
+  if (reducedMotion) {
+    targets.forEach(function (el) { el.classList.add("in"); });
+    return;
+  }
+  var revealObserver = new IntersectionObserver(
+    function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("in");
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.2 }
+  );
+  targets.forEach(function (el) { revealObserver.observe(el); });
+})();
+
+/* Count-up — animateCounters() copied from js/main.js (75 and 46 only; the 0
+   has no data attribute, no selector matches it, ever). Trigger is the same
+   on-scroll pattern as the reveals: threshold .2 on the stats band, once. */
+(function () {
+  var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function animateCounters() {
+    var els = document.querySelectorAll("[data-count]");
+    if (reducedMotion) return; // final values are already in the HTML
+
+    var DURATION = 1200;
+    var easeOutCubic = function (t) { return 1 - Math.pow(1 - t, 3); };
+
+    els.forEach(function (el) {
+      var target = parseInt(el.dataset.count, 10);
+      el.textContent = "0";
+      var start = performance.now();
+      var tick = function (now) {
+        var p = Math.min((now - start) / DURATION, 1);
+        el.textContent = String(Math.round(target * easeOutCubic(p)));
+        if (p < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+  }
+
+  if (reducedMotion) return; // show final numbers instantly
+
+  var band = document.querySelector(".dx-stats");
+  var countObserver = new IntersectionObserver(
+    function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        countObserver.disconnect();
+        // Wait for the real font (avoids a mid-count metric swap), capped at 400ms.
+        Promise.race([
+          document.fonts ? document.fonts.ready : Promise.resolve(),
+          new Promise(function (r) { setTimeout(r, 400); }),
+        ]).then(animateCounters);
+      });
+    },
+    { threshold: 0.2 }
+  );
+  countObserver.observe(band);
+})();
+
+/* Headline scroll fill — scrubbed, word by word. Words start ~20% white and
+   fill to their exact static colors (white lines → #FFFFFF, muted lines →
+   #A6A3AD = --grey-on-dark). clamp() pins the trigger range inside the
+   scrollable bounds since the headline is near the top of this one-section
+   page, so progress is 0 at scroll 0. Skipped entirely under reduced motion —
+   the markup/CSS already carry the final colors. */
+(function () {
+  var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reducedMotion || !window.gsap || !window.ScrollTrigger) return;
+  gsap.registerPlugin(ScrollTrigger);
+
+  var whiteWords = gsap.utils.toArray(".dx-h2 > span:not(.dx-h2-muted) .dx-w");
+  var greyWords = gsap.utils.toArray(".dx-h2 > .dx-h2-muted .dx-w");
+
+  gsap.set(whiteWords.concat(greyWords), { color: "rgba(255, 255, 255, 0.2)" });
+
+  gsap.timeline({
+    scrollTrigger: {
+      trigger: ".dx-copy",
+      start: "clamp(top 85%)",
+      // Complete when the headline is roughly centered (center at 55% of the
+      // viewport) — but never sooner than 240px of scroll: on mobile the
+      // headline starts above that line, which would collapse the clamped
+      // range to 0–0 and freeze the scrub at its dim state.
+      end: () => {
+        var rect = document.querySelector(".dx-copy").getBoundingClientRect();
+        var center = rect.top + window.scrollY + rect.height / 2;
+        var maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        return Math.min(maxScroll, Math.max(240, Math.round(center - window.innerHeight * 0.55)));
+      },
+      scrub: true
+    },
+    defaults: { ease: "none", duration: 0.3 }
+  })
+    .to(whiteWords, { color: "#FFFFFF", stagger: 0.18 })
+    .to(greyWords, { color: "#A6A3AD", stagger: 0.18 }, ">-0.1");
+})();
+</script>
+</body>
+</html>

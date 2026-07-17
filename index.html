@@ -132,86 +132,91 @@
 
     </section>
 
-    <!-- ============ [ PROOF STRIP ] — dark, quiet supporting stats (moved verbatim from Hero) ============ -->
-    <section class="proof-strip" id="proof-strip" data-zone="dark">
+    <!-- ============ [ 02 / THE DIAGNOSIS ] — dark: stats band + monumental headline + two phones ============ -->
+    <section class="diagnosis" id="diagnosis" data-zone="dark">
+
+      <!-- Stats band — three columns, one row at every width. -->
       <ul class="counters" data-reveal>
         <li class="counter">
           <p class="counter-num"><span data-count="75">75</span><span class="counter-unit">%</span></p>
-          <p class="counter-desc">judge a business's credibility by its website design alone.</p>
-          <p class="counter-source">Stanford Web Credibility Research</p>
+          <p class="counter-desc">judge by website alone</p>
+          <p class="counter-source">Stanford</p>
         </li>
         <li class="counter">
           <p class="counter-num"><span data-count="46">46</span><span class="counter-unit">%</span></p>
-          <p class="counter-desc">of bookings happen when the doors are closed.</p>
-          <p class="counter-source">Phorest — 5,000+ salons &amp; spas analyzed</p>
+          <p class="counter-desc">of bookings happen after close</p>
+          <p class="counter-source">Phorest, 5,000+ spas</p>
         </li>
         <li class="counter counter-frozen">
           <!-- The 0 has NO data attribute and NO JS hook. It renders statically,
                instantly, one weight heavier. Never animate it. -->
           <p class="counter-num">0</p>
-          <p class="counter-desc">will DM and wait until morning.</p>
-          <p class="counter-source">Source: your inbox.</p>
+          <p class="counter-desc">will wait until morning</p>
+          <p class="counter-source">source: your inbox</p>
         </li>
       </ul>
-    </section>
 
-    <!-- ============ [ 02 / THE DIAGNOSIS ] — dark, two phones ============ -->
-    <section class="diagnosis" id="diagnosis" data-zone="dark">
-      <div class="phones">
+      <!-- Headline + phones: stacked below 1280px, centered split above. -->
+      <div class="diagnosis-grid">
 
-        <figure class="phone-unit phone-unit-left" data-reveal>
-          <!-- Layered on purpose: glow / frame / screen are separate elements so a
-               future animation pass can move each independently. -->
-          <div class="phone-stage">
-            <div class="phone phone-dm" role="img"
-                 aria-label="Instagram direct message sent at night, seen 13 hours later, never answered">
-              <span class="dynamic-island" aria-hidden="true"></span>
-              <div class="phone-screen screen-dm">
-                <p class="screen-status">11:20</p>
-                <div class="dm-header">
-                  <span class="dm-avatar" aria-hidden="true"></span>
-                  <span class="dm-name">yourclinic</span>
-                </div>
-                <div class="dm-thread">
-                  <p class="dm-bubble">Hi! How much is laser hair removal?</p>
-                  <p class="dm-receipt">Seen 13h ago</p>
-                </div>
-                <p class="dm-input">Message…</p>
-              </div>
-            </div>
-          </div>
-          <figcaption class="phone-caption-block">
-            <p class="phone-caption">"DM for info."<br>
-            Sent 22:15. Seen 11:20 — the next day.<br>
-            She'd booked elsewhere by 22:26.</p>
-            <p class="micro">No record. No alert. She never existed.</p>
-          </figcaption>
-        </figure>
+        <div class="diagnosis-copy" data-reveal>
+          <h2>
+            <!-- Word spans carry final colors in static CSS; the scroll fill in
+                 main.js (skipped under reduced motion) dims then refills them. -->
+            <span><span class="fill-word">A</span> <span class="fill-word">DM</span> <span class="fill-word">needs</span></span>
+            <span><span class="fill-word">you</span> <span class="fill-word">awake.</span></span>
+            <span class="h2-muted"><span class="fill-word">A</span> <span class="fill-word">system</span></span>
+            <span class="h2-muted"><span class="fill-word">doesn't.</span></span>
+          </h2>
+        </div>
 
-        <figure class="phone-unit phone-unit-right" data-reveal>
-          <div class="phone-stage">
-            <!-- Rose glow = allowed rose instance 2 of 3. The only light source on the dark half. -->
-            <span class="phone-glow" aria-hidden="true"></span>
-            <div class="phone phone-velora" role="img" aria-label="Velora booking confirmation at 22:26">
-              <span class="dynamic-island" aria-hidden="true"></span>
-              <div class="phone-screen screen-velora">
-                <p class="screen-status">22:26</p>
-                <p class="velora-url">velora.splendessa.com</p>
-                <div class="velora-booking">
-                  <p class="velora-mark">Velora</p>
-                  <p class="velora-service">Laser Hair Removal</p>
-                  <p class="velora-slot">Tomorrow, 2:00 PM</p>
-                  <p class="velora-confirmed">Booking confirmed ✓</p>
-                  <p class="velora-time">22:26</p>
+        <div class="phones">
+
+          <figure class="phone-unit phone-unit-left" data-reveal>
+            <!-- Layered on purpose: glow / frame / screen are separate elements so a
+                 future animation pass can move each independently. -->
+            <div class="phone-stage">
+              <div class="phone phone-dm" role="img"
+                   aria-label="Instagram direct message sent at night, seen 13 hours later, never answered">
+                <span class="dynamic-island" aria-hidden="true"></span>
+                <div class="phone-screen screen-dm">
+                  <p class="screen-status">11:20</p>
+                  <div class="dm-header">
+                    <span class="dm-avatar" aria-hidden="true"></span>
+                    <span class="dm-name">yourclinic</span>
+                  </div>
+                  <div class="dm-thread">
+                    <p class="dm-bubble">Hi! How much is laser hair removal?</p>
+                    <p class="dm-receipt">Seen 13h ago</p>
+                  </div>
+                  <p class="dm-input">Message…</p>
                 </div>
               </div>
             </div>
-          </div>
-          <figcaption class="phone-caption-block">
-            <p class="phone-caption">Booked at 22:26. Confirmed instantly.<br>
-            You woke up to a filled chair.</p>
-          </figcaption>
-        </figure>
+          </figure>
+
+          <figure class="phone-unit phone-unit-right" data-reveal>
+            <div class="phone-stage">
+              <!-- Rose glow = allowed rose instance 2 of 3. The only light source on the dark half. -->
+              <span class="phone-glow" aria-hidden="true"></span>
+              <div class="phone phone-velora" role="img" aria-label="Velora booking confirmation at 22:26">
+                <span class="dynamic-island" aria-hidden="true"></span>
+                <div class="phone-screen screen-velora">
+                  <p class="screen-status">22:26</p>
+                  <p class="velora-url">velora.splendessa.com</p>
+                  <div class="velora-booking">
+                    <p class="velora-mark">Velora</p>
+                    <p class="velora-service">Laser Hair Removal</p>
+                    <p class="velora-slot">Tomorrow, 2:00 PM</p>
+                    <p class="velora-confirmed">Booking confirmed ✓</p>
+                    <p class="velora-time">22:26</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </figure>
+
+        </div>
 
       </div>
     </section>
@@ -337,6 +342,7 @@
   </main>
 
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
 <script>
 (function(){
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
