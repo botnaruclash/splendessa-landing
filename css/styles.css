@@ -429,8 +429,14 @@ main > section > * {
 /* ---------- 02 / The Diagnosis: stats band + monumental headline + two phones ---------- */
 
 .diagnosis {
+  /* Symmetric breathing room around the stats band: the space above it
+     (section padding-top, hook -> stats) and below it (.diagnosis-grid
+     padding-top, stats -> split) share this one value, so they are equal
+     at every width. ~67px at 390px, ~130px at 1440px, capped at 140px. */
+  --stats-space: clamp(64px, 6vw + 44px, 140px);
   gap: 0;                       /* spacing managed per-row below */
   justify-content: flex-start;  /* bias content upward in tall viewports */
+  padding-top: var(--stats-space);
 }
 
 /* Stats band. Numbers are the section's data spine: large, white, dominant.
@@ -471,7 +477,7 @@ main > section > * {
   justify-items: center;
   text-align: center;
   gap: 48px;
-  padding-top: clamp(72px, 10vh, 128px);
+  padding-top: var(--stats-space);
 }
 
 /* Monumental headline: four explicit lines, one span each, never rewrapped. */
@@ -503,7 +509,6 @@ main > section > * {
        gap - 25px (bbox left bleed) = margin. Headline width is 5.58em of its
        clamped size; 591px = 544px column + 97px right bleed - 2 x 25px. */
     gap: max(24px, calc((100vw - 591px - 5.58 * clamp(60px, 7vw, 104px)) / 3));
-    padding-top: clamp(110px, 14vh, 140px);
   }
   /* Anchored at the slot's start + 20px so the DM phone's tilted corner
      clears the headline's longest line. */
