@@ -429,15 +429,31 @@ main > section > * {
 /* ---------- 02 / The Diagnosis: stats band + monumental headline + two phones ---------- */
 
 .diagnosis {
-  /* Symmetric breathing room around the stats band: the space above it
-     (section padding-top, hook -> stats) and below it (.diagnosis-grid
-     padding-top, stats -> split) share this one value, so they are equal
-     at every width. ~67px at 390px, ~130px at 1440px, capped at 140px. */
+  /* Symmetric breathing room around the stats band, measured VISUALLY:
+     hook CTA row -> stats equals stats -> split. Both sides target this
+     value (~67px at 390px, ~130px at 1440px, capped at 140px). */
   --stats-space: clamp(64px, 6vw + 44px, 140px);
+  /* The hook centers its content in a 100dvh box, leaving an internal tail
+     of whitespace below its CTA row equal to 50dvh minus the content's
+     lower half (--hero-k, calibrated per breakpoint from rendered
+     measurements). Pulling this section up by (tail - target) makes the
+     visual hook->stats distance equal --stats-space without touching the
+     hook itself — it still fills the first viewport unchanged. Both dark,
+     so the overlap seam is invisible; pre-reveal the stats are transparent,
+     so at typical viewport heights nothing shows at load. */
+  --hero-k: 282px;              /* hook content lower half at ~1440w */
   gap: 0;                       /* spacing managed per-row below */
   justify-content: flex-start;  /* bias content upward in tall viewports */
-  padding-top: var(--stats-space);
+  padding-top: 0;
+  margin-top: calc(var(--stats-space) + var(--hero-k) - 50dvh);
+  /* The hook is position:relative and opaque, so it would paint over the
+     overlapping stats sliver; lift this section just above it (still below
+     the statusbar z:40 and the hook's wipe z:60). */
+  position: relative;
+  z-index: 1;
 }
+@media (max-width: 1279px) { .diagnosis { --hero-k: 252px; } } /* ~768w */
+@media (max-width: 760px)  { .diagnosis { --hero-k: 324px; } } /* ~390w */
 
 /* Stats band. Numbers are the section's data spine: large, white, dominant.
    Weight (not color) marks the frozen "0" below. */
