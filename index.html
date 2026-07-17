@@ -363,6 +363,8 @@
 
   // Everything animated starts here — transforms live in GSAP, never parked in CSS.
   function setInitial(){
+    hero.classList.remove('theme-fading');
+    statusbar.classList.remove('theme-fading');
     setTheme('night');
     setClock('10:04');
     $('#chipPick').classList.remove('is-selected');
@@ -413,6 +415,7 @@
     .addLabel('wipe')
     .to('#wipe', {yPercent:0, duration:.5, ease:'power3.in'})
     .call(() => {
+      setTheme('day');
       setClock('10:04');
       gsap.set('#sceneThread', {autoAlpha:0});
       gsap.set('#sceneBook', {autoAlpha:1});
@@ -444,7 +447,19 @@
     .to('#pEyebrow', {autoAlpha:1, y:0}, 'pitch+=.35')
     .to('#pSub', {autoAlpha:1, y:0}, 'pitch+=.6')
     .to('#pCard', {autoAlpha:1, y:0, duration:.7}, 'pitch+=.7')
-    .to(['#pCta','#pReplay'], {autoAlpha:1, y:0, stagger:.08}, 'pitch+=.8');
+    .to(['#pCta','#pReplay'], {autoAlpha:1, y:0, stagger:.08}, 'pitch+=.8')
+
+  // ---- NIGHTFALL · the hero settles back to night ----
+    .addLabel('nightfall', '+=1.2')
+    .call(() => {
+      hero.classList.add('theme-fading');
+      statusbar.classList.add('theme-fading');
+      setTheme('night');
+    }, null, 'nightfall')
+    .call(() => {
+      hero.classList.remove('theme-fading');
+      statusbar.classList.remove('theme-fading');
+    }, null, 'nightfall+=1.05');
 
   function replay(){
     hero.scrollIntoView({behavior:'instant', block:'start'});
