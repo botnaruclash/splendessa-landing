@@ -152,7 +152,9 @@ main > section > * {
   --grey-1: #6E6A73;   /* muted text on white */
   --grey-2: #E9E7EB;   /* hairlines, surfaces, muted text on ink */
   --font-ui: "Hanken Grotesk", system-ui, sans-serif;
-  --font-display: "Gloock", serif;
+  /* The site's Inter stack, hoisted to a var so the hero H1 can share it (matches
+     body's family; Gloock display serif retired — hero H1 is now Inter like the rest). */
+  --font-inter: "Inter", "Inter-fallback", system-ui, sans-serif;
   --sb-h: 56px;
 }
 
@@ -333,7 +335,7 @@ main > section > * {
 }
 .hero .p-eyebrow b{color:var(--rose)}
 .hero h1{
-  font-family:var(--font-display);font-weight:400;
+  font-family:var(--font-inter);font-weight:700;
   font-size:clamp(2.55rem,5.6vw,5rem);
   line-height:1.08;letter-spacing:-.01em;
 }
