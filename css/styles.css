@@ -1215,16 +1215,16 @@ html.no-anim .ov-chip-next { opacity: 1; visibility: visible; }
 /* Text sits above the watermark and in the card's lower band, clear of the number. */
 .std-card-body { position: relative; }
 .std-card-title {
-  font-weight: 800;
-  font-size: clamp(24px, 2vw, 30px);
-  letter-spacing: -0.015em;
-  line-height: 1.12;
+  font-weight: 850;
+  font-size: clamp(27px, 2.3vw, 34px);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
 }
 .std-card-desc {
   margin-top: 12px;
-  font-size: clamp(16px, 1.15vw, 18px);
+  font-size: clamp(17px, 1.35vw, 20px);
   line-height: 1.5;
-  color: var(--grey-on-light);
+  color: var(--grey-on-light); /* stays light (inherited weight) — well under the title */
 }
 
 /* ---------- 04 / The Ultimatum ---------- */
