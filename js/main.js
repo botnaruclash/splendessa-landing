@@ -296,9 +296,9 @@ if (reducedMotion) {
 
   // Heavy delayed lerp follow (same 0.075/frame feel as the play pill), with a
   // fixed anchor so the cursor meets the image near its lower-left: the cursor
-  // sits at 40% from the image's left and 70% from its top, so the image sits
-  // up and to the right of the cursor.
-  const ANCHOR_X = 0.40, ANCHOR_Y = 0.70;
+  // sits at 15% from the image's left (≈70% from center toward the left edge)
+  // and 70% from its top, so the image extends mostly up and to the right.
+  const ANCHOR_X = 0.15, ANCHOR_Y = 0.70;
   let pvTx = 0, pvTy = 0, pvX = 0, pvY = 0, pvDocked = false;
 
   const clamp = (v, min, max) => Math.max(min, Math.min(v, max));
