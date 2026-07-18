@@ -1145,16 +1145,33 @@ html.no-anim .ov-chip-next { opacity: 1; visibility: visible; }
   object-position: top center;
 }
 
-/* Three benefit cards. perspective on the row gives the per-card 3D tilt its depth
-   (initStandardTilt); the tilt itself is JS + reduced-motion-gated, but the card's
-   border/number/shadow rose activation is pure CSS :hover, so it works without JS. */
+/* Heading/subheading removed — the section is now just the three cards, pulled up
+   tight to the section above: no forced full-viewport height or vertical centering,
+   and a much-reduced top pad (was the main>section clamp(96,14vh,160)). */
+.standard {
+  min-height: auto;
+  justify-content: flex-start;
+  padding-top: clamp(28px, 4vh, 56px);
+  padding-bottom: clamp(72px, 11vh, 132px);
+  /* Pull the cards up into the previous section's empty bottom padding so they sit
+     close to it. Safe at any viewport: the site-wide main>section bottom padding
+     (≥96px) plus this section's top padding always exceed this negative margin, so
+     the cards never reach the previous section's actual content. Scales with vh to
+     track that padding band. */
+  margin-top: -11vh;
+}
+
+/* Three benefit cards — large and monumental. perspective on the row gives the
+   per-card 3D tilt its depth (initStandardTilt); the tilt itself is JS +
+   reduced-motion-gated, but the card's border/number/shadow rose activation is
+   pure CSS :hover, so it works without JS. */
 .std-cards {
   list-style: none;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: clamp(20px, 2.4vw, 32px);
+  gap: clamp(24px, 2.6vw, 40px);
   width: 100%;
-  perspective: 1000px;
+  perspective: 1200px;
   text-align: left;
 }
 .std-card {
@@ -1163,12 +1180,12 @@ html.no-anim .ov-chip-next { opacity: 1; visibility: visible; }
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  min-height: 260px;
-  padding: clamp(26px, 2.6vw, 38px);
+  min-height: clamp(300px, 32vw, 384px);
+  padding: clamp(30px, 3.2vw, 48px);
   background: var(--white);
   border: 1px solid var(--grey-2);
-  border-radius: 20px;
-  box-shadow: 0 18px 40px -26px rgba(23, 22, 26, 0.18);
+  border-radius: 22px;
+  box-shadow: 0 20px 46px -26px rgba(23, 22, 26, 0.18);
   transform-style: preserve-3d;
   will-change: transform;
   /* Only paint props transition here — the tilt transform is driven by GSAP. */
@@ -1176,18 +1193,18 @@ html.no-anim .ov-chip-next { opacity: 1; visibility: visible; }
 }
 .std-card:hover {
   border-color: var(--rose);
-  box-shadow: 0 28px 56px -26px rgba(23, 22, 26, 0.24);
+  box-shadow: 0 30px 60px -26px rgba(23, 22, 26, 0.24);
 }
-/* Big number as a design anchor, not a list marker: charcoal watermark that
-   lights up rose on the hovered card only (the section's single rose touchpoint). */
+/* Big number as a dominant design anchor, not a list marker: charcoal watermark
+   that lights up rose on the hovered card only (the section's single rose touchpoint). */
 .std-num {
   position: absolute;
-  top: -0.14em;
-  left: 0.08em;
-  font-weight: 800;
-  font-size: clamp(90px, 9vw, 140px);
+  top: -0.16em;
+  left: 0.06em;
+  font-weight: 900;
+  font-size: clamp(128px, 13.5vw, 208px);
   line-height: 1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   color: var(--charcoal);
   opacity: 0.06;
   user-select: none;
@@ -1197,10 +1214,15 @@ html.no-anim .ov-chip-next { opacity: 1; visibility: visible; }
 .std-card:hover .std-num { color: var(--rose); opacity: 0.85; }
 /* Text sits above the watermark and in the card's lower band, clear of the number. */
 .std-card-body { position: relative; }
-.std-card-title { font-weight: 700; font-size: 20px; letter-spacing: -0.01em; }
+.std-card-title {
+  font-weight: 800;
+  font-size: clamp(24px, 2vw, 30px);
+  letter-spacing: -0.015em;
+  line-height: 1.12;
+}
 .std-card-desc {
-  margin-top: 8px;
-  font-size: 15px;
+  margin-top: 12px;
+  font-size: clamp(16px, 1.15vw, 18px);
   line-height: 1.5;
   color: var(--grey-on-light);
 }
@@ -1303,7 +1325,7 @@ html.js [data-reveal].in {
 /* Cards: 3-across holds down to here (checked clean at 768), then stack full-width. */
 @media (max-width: 640px) {
   .std-cards { grid-template-columns: 1fr; }
-  .std-card { min-height: 0; }
+  .std-card { min-height: 260px; }
 }
 
 @media (max-width: 480px) {
