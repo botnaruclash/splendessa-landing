@@ -252,7 +252,7 @@
           <span class="std-num" aria-hidden="true">2</span>
           <div class="std-card-body">
             <h3 class="std-card-title">Books while you sleep.</h3>
-            <p class="std-card-desc">Live calendar, instant confirmation — even at 10&nbsp;PM.</p>
+            <p class="std-card-desc">Live calendar, instant confirmation — <span class="std-nowrap">even at 10&nbsp;PM.</span></p>
           </div>
         </li>
         <li class="std-card">
@@ -646,26 +646,96 @@
 })();
 </script>
 <script>
-/* Section 04 cards — 3D magnetic tilt toward the cursor, with a smooth eased
-   return. GSAP drives the transform (rose activation is pure CSS :hover, so it
-   survives here regardless). Fully disabled under reduced motion / no GSAP —
-   cards then rest flat and legible, which is their static final state anyway. */
-(function initStandardTilt(){
+/* Section 04 cards — three cursor-aware layers, all cheap:
+   1. 3D magnetic tilt on hover (GSAP, per-card pointermove — unchanged behaviour).
+   2. Idle "breathing": the big background number pulses ~0.06→0.11 opacity, ~4s loop.
+   3. Proximity glow: as the cursor nears a card, its number + border ease toward rose,
+      reaching the full hover state on contact.
+   Layers 2 & 3 share ONE requestAnimationFrame loop; mousemove only stores x/y (no
+   work). The loop runs only while the section is on-screen (IntersectionObserver).
+   Colour/opacity/transform only — no layout reads-then-writes thrash (rects cached,
+   re-measured on scroll/resize). Fully disabled under reduced motion / no GSAP: the
+   cards then rest in their static CSS state (number at 0.06, :hover rose as fallback). */
+(function initStandardCards(){
+  const cards = Array.prototype.slice.call(document.querySelectorAll('.std-card'));
+  if (!cards.length) return;
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !window.gsap) return;
+
+  const nums = cards.map((c) => c.querySelector('.std-num'));
+  const CHARCOAL = [23, 22, 26], ROSE = [181, 83, 109], GREY2 = [233, 231, 235];
+  const clamp01 = (v) => v < 0 ? 0 : v > 1 ? 1 : v;
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const mix = (a, b, t) => 'rgb(' + Math.round(lerp(a[0], b[0], t)) + ',' + Math.round(lerp(a[1], b[1], t)) + ',' + Math.round(lerp(a[2], b[2], t)) + ')';
+
+  // --- Layer 1: 3D magnetic tilt (unchanged) ---
   const MAX = 9; // degrees — subtle
-  document.querySelectorAll('.std-card').forEach((card) => {
+  cards.forEach((card) => {
     const rx = gsap.quickTo(card, 'rotationX', { duration: 0.5, ease: 'power2.out' });
     const ry = gsap.quickTo(card, 'rotationY', { duration: 0.5, ease: 'power2.out' });
     card.addEventListener('pointermove', (e) => {
       if (e.pointerType && e.pointerType !== 'mouse') return; // fine-pointer only
       const r = card.getBoundingClientRect();
-      const nx = (e.clientX - r.left) / r.width - 0.5;   // -0.5 (left) .. 0.5 (right)
-      const ny = (e.clientY - r.top) / r.height - 0.5;   // -0.5 (top) .. 0.5 (bottom)
-      ry(nx * 2 * MAX);    // cursor right → right edge tilts toward viewer
-      rx(-ny * 2 * MAX);   // cursor down  → bottom edge tilts toward viewer
+      ry(((e.clientX - r.left) / r.width - 0.5) * 2 * MAX);
+      rx(-((e.clientY - r.top) / r.height - 0.5) * 2 * MAX);
     });
     card.addEventListener('pointerleave', () => { rx(0); ry(0); });
   });
+
+  // --- cheap cursor tracking: store coords only ---
+  let cx = -1e5, cy = -1e5;
+  window.addEventListener('pointermove', (e) => {
+    if (e.pointerType && e.pointerType !== 'mouse') return;
+    cx = e.clientX; cy = e.clientY;
+  }, { passive: true });
+  // cursor gone → cards relax
+  document.addEventListener('pointerleave', () => { cx = cy = -1e5; }, { passive: true });
+
+  // --- cached geometry (re-measured only when the layout could have moved) ---
+  let rects = [], dirty = true;
+  const measure = () => { rects = cards.map((c) => c.getBoundingClientRect()); dirty = false; };
+  window.addEventListener('scroll', () => { dirty = true; }, { passive: true });
+  window.addEventListener('resize', () => { dirty = true; }, { passive: true });
+
+  const GLOW = 260;                 // px beyond a card's edges where proximity begins
+  const prox = cards.map(() => 0);  // smoothed 0..1 per card
+  const lastCT = cards.map(() => -1);
+  const t0 = performance.now();
+
+  function frame(now) {
+    if (!running) return;
+    if (dirty) measure();
+    const t = (now - t0) / 1000;
+    // 4s ease-in-out loop between 0.06 and 0.11
+    const breath = 0.085 + 0.025 * Math.sin(t * (Math.PI / 2));
+    for (let i = 0; i < cards.length; i++) {
+      const r = rects[i];
+      const dx = Math.max(r.left - cx, 0, cx - r.right);
+      const dy = Math.max(r.top - cy, 0, cy - r.bottom);
+      const target = clamp01(1 - Math.hypot(dx, dy) / GLOW);
+      prox[i] += (target - prox[i]) * 0.15;        // eased approach
+      const p = prox[i];
+      // opacity: idle breathing when far → 0.85 on full hover (composited via will-change)
+      nums[i].style.opacity = lerp(breath, 0.85, p).toFixed(3);
+      // colour/border only repaint when the proximity actually changes (idle = no writes)
+      const ct = Math.round(p * 100) / 100;
+      if (ct !== lastCT[i]) {
+        lastCT[i] = ct;
+        if (ct <= 0) { nums[i].style.color = ''; cards[i].style.borderColor = ''; } // → CSS resting
+        else { nums[i].style.color = mix(CHARCOAL, ROSE, p); cards[i].style.borderColor = mix(GREY2, ROSE, p); }
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // Run the loop only while the section is visible.
+  let running = false;
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      if (e.isIntersecting && !running) { running = true; dirty = true; requestAnimationFrame(frame); }
+      else if (!e.isIntersecting) { running = false; }
+    });
+  }, { threshold: 0 });
+  io.observe(document.getElementById('standard'));
 })();
 </script>
 </body>
