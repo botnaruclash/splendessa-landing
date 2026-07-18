@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Splendessa — The Work · demo list prototype</title>
+<title>Splendessa — The Work · demo list + overlay prototype</title>
 <style>
   :root {
     --paper: #FFFFFF;
@@ -16,6 +16,7 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   html { background: var(--paper); }
+  html.ov-lock { overflow: hidden; }
 
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -23,6 +24,14 @@
     background: var(--paper);
     -webkit-font-smoothing: antialiased;
   }
+
+  :focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 4px;
+    border-radius: 4px;
+  }
+
+  /* ================= LIST ================= */
 
   .work {
     min-height: 100svh;
@@ -57,6 +66,9 @@
   .demo-list {
     list-style: none;
     text-align: center;
+    /* Above the floating preview (z:1): titles render over the card. */
+    position: relative;
+    z-index: 2;
   }
 
   .demo-list li {
@@ -64,6 +76,8 @@
     padding: 0.14em 0;
   }
 
+  /* Comet hover: instant in (~80ms), slow decay out (~550ms) — moving down
+     the list leaves a fading trail. Siblings recede to 70% in ~230ms. */
   .demo-item {
     display: inline-block;
     font-size: clamp(1.9rem, 6.5vw, 4.8rem);
@@ -72,17 +86,20 @@
     text-decoration: none;
     text-wrap: balance;
     color: var(--dim);
-    transition: color 0.3s ease;
+    cursor: pointer;
+    transition: color 0.55s ease, opacity 0.23s ease;
   }
 
   .demo-item:hover,
   .demo-item:focus-visible {
     color: var(--ink);
-    transition-duration: 0.12s;
+    transition-duration: 0.08s, 0.23s;
   }
 
-  a.demo-item { cursor: pointer; }
-  span.demo-item { cursor: default; }
+  .demo-list:hover .demo-item:not(:hover) { opacity: 0.7; }
+
+  /* GSAP owns the colors during the list-enter beat. */
+  .demo-list.entering .demo-item { transition: none; }
 
   .demo-item:focus-visible {
     outline: 2px solid var(--ink);
@@ -90,11 +107,12 @@
     border-radius: 4px;
   }
 
+  /* Floating hover preview — sits BEHIND the list titles. */
   .preview {
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 10;
+    z-index: 1;
     width: min(320px, 42vw);
     aspect-ratio: 16 / 10;
     border-radius: 14px;
@@ -107,7 +125,8 @@
     will-change: transform;
   }
 
-  .preview .face { position: absolute; inset: 0; }
+  .preview .face,
+  .ov-next-media .face { position: absolute; inset: 0; }
 
   .face img {
     display: block;
@@ -129,14 +148,335 @@
     color: var(--ink);
   }
 
+  /* ================= OVERLAY ================= */
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: var(--paper);
+  }
+
+  .ov-scroll {
+    height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  /* Lives in the next-up end screen, above the card. */
+  .ov-back {
+    display: inline-block;
+    margin-bottom: 34px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+    color: #FFFFFF;
+    padding: 6px 12px;
+  }
+  .ov-back:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .ov-back:focus-visible { outline-color: #FFFFFF; }
+
+  /* Round × close, top-right — hero-only control, fades once scrolled past.
+     Rotates 90° on hover of the button itself (:hover). */
+  .ov-close {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 110;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 0;
+    background: var(--paper);
+    color: var(--ink);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(23, 22, 26, 0.22);
+    transform: rotate(0deg);
+    transform-origin: center center; /* exact-center rotation, no wobble */
+    transition: transform 0.25s ease-out;
+  }
+  /* Symmetric SVG cross rotates cleanly around the button's center on hover. */
+  .ov-close svg { display: block; width: 32px; height: 32px; }
+  .ov-close:hover { transform: rotate(90deg); }
+
+  /* --- hero: pinned, dark floor with a faint 34px grid under the media --- */
+  .ov-hero {
+    display: block;
+    position: sticky;
+    top: 10px;
+    z-index: 1;
+    margin: 10px;
+    height: calc(100svh - 20px);
+    border-radius: 18px;
+    overflow: hidden;
+    background:
+      repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 34px),
+      repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 34px),
+      var(--ink);
+  }
+  /* The play pill is a follower beside the cursor, never a replacement. */
+  .ov-hero.is-link { cursor: pointer; }
+  .ov-hero:focus-visible { outline-offset: 2px; }
+
+  .ov-hero-media { position: absolute; inset: 0; will-change: transform; }
+
+  .ov-hero-ph {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+  }
+  .ov-hero-mark-wrap { overflow: hidden; }
+  .ov-hero-mark {
+    display: block;
+    font-size: clamp(2.5rem, 7vw, 6rem);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--paper);
+  }
+
+  /* Cursor pill over the hero — the page's single rose moment. ~88×40. */
+  .play-chip {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 120;
+    width: 88px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    background: var(--rose);
+    color: #FFFFFF;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: 999px;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    will-change: transform;
+  }
+
+  /* --- white sheet (description + gallery) slides over the pinned hero --- */
+  .ov-sheet {
+    position: relative;
+    z-index: 3; /* above the runway: the sheet lifts OFF the dark panel (curtain) */
+    background: var(--paper);
+  }
+
+  .ov-desc {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: clamp(2rem, 5vw, 5rem);
+    align-items: start;
+    padding: clamp(4.5rem, 12vh, 8rem) clamp(1.5rem, 6vw, 6rem);
+  }
+  .ov-title {
+    font-size: clamp(2.4rem, 6vw, 4.5rem);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.05;
+  }
+  .ov-text {
+    font-size: 17px;
+    line-height: 1.65;
+    max-width: 34ch; /* narrow column, per reference */
+    padding-top: 0.6em;
+  }
+
+  /* "see the demo •" — dark pill. Simple scale-up on hover. */
+  .ov-see {
+    display: inline-block;
+    margin-top: 2.2rem;
+    padding: 15px 28px;
+    background: var(--ink);
+    color: #FFFFFF;
+    border-radius: 999px;
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer; /* identical look on "soon" demos, where it's click-inert */
+    transform-origin: center;
+    transition: transform 0.2s ease-out;
+  }
+  .ov-see:hover,
+  .ov-see:focus-visible { transform: scale(1.06); }
+  .ov-see:focus-visible { outline-offset: 3px; }
+
+  .ov-gallery {
+    display: flex;
+    flex-direction: column;
+    padding: 0 clamp(1.5rem, 6vw, 6rem) clamp(4rem, 12vh, 8rem);
+  }
+  .ov-gallery figure {
+    position: relative;
+    width: min(600px, 62vw);
+    aspect-ratio: 16 / 10;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 18px 60px rgba(23, 22, 26, 0.14), 0 2px 10px rgba(23, 22, 26, 0.07);
+    margin-bottom: clamp(3rem, 10vh, 7rem);
+  }
+  .ov-gallery figure:nth-child(odd) { align-self: flex-start; }
+  .ov-gallery figure:nth-child(even) { align-self: flex-end; }
+  .ov-gallery figure:last-child { margin-bottom: 0; }
+  /* Frame-expansion reveal: figure is the clip frame, the child is the
+     slightly-zoomed image that settles to 1.0 as the frame opens. */
+  .ov-gallery figure > * { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .ov-gallery figure img { object-fit: cover; }
+
+  /* --- next up: curtain runway (one viewport tucked under the sheet). --- */
+  .ov-next-wrap {
+    position: relative;
+    z-index: 2;
+    height: 200vh;
+    margin-top: -100vh;
+    background: var(--ink);
+  }
+  .ov-next-sticky {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  .ov-next-card {
+    position: relative;
+    width: min(640px, 78vw);
+    aspect-ratio: 16 / 10;
+    border: 0;
+    padding: 0;
+    background: none;
+    cursor: pointer;
+    font: inherit;
+  }
+  .ov-next-card:focus-visible {
+    outline: 2px solid #FFFFFF;
+    outline-offset: 6px;
+    border-radius: 18px;
+  }
+  .ov-next-media {
+    position: absolute;
+    inset: 0;
+    border-radius: 18px;
+    overflow: hidden;
+    display: block;
+  }
+
+  .ov-chip {
+    position: absolute;
+    z-index: 2;
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 15px;
+    font-weight: 700;
+    padding: 11px 20px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .ov-chip-next {
+    left: -18px;
+    bottom: -14px;
+    transform: rotate(-7deg);
+  }
+  .ov-chip-scroll {
+    right: -22px;
+    top: -16px;
+    transform: rotate(5deg);
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  .ov-next-title {
+    margin-top: 34px;
+    color: var(--paper);
+    font-size: clamp(1.3rem, 2.6vw, 2rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  /* ONE overscroll bar, right edge — center-anchored, grows both ways. */
+  .ov-progress {
+    position: fixed;
+    right: 20px;
+    top: 25vh;
+    height: 50vh;
+    width: 8px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.18);
+    z-index: 110;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    pointer-events: none;
+  }
+  .ov-progress.on { opacity: 1; }
+  .ov-progress span {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 4px;
+    background: #FFFFFF;
+    transform: scaleY(0);
+    transform-origin: center;
+  }
+
+  /* Dark full-screen wash during a commit swap (near-black + blur), so the
+     transition is never white. Sits above content, below the controls. */
+  .ov-wash {
+    position: fixed;
+    inset: 0;
+    z-index: 105;
+    background: #050505;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  /* ================= responsive / motion ================= */
+
+  @media (max-width: 700px) {
+    .ov-desc { grid-template-columns: 1fr; }
+    .ov-text { padding-top: 0; }
+    .ov-gallery figure { width: min(600px, 86vw); }
+    .ov-next-card { width: 84vw; }
+    .ov-chip { font-size: 13px; padding: 9px 15px; }
+    .ov-chip-scroll { right: -8px; }
+    .ov-chip-next { left: -6px; }
+  }
+
+  /* Reduced motion (or no GSAP): html.no-anim is set by JS. */
+  html.no-anim .ov-next-wrap { height: auto; margin-top: 0; }
+  html.no-anim .ov-next-sticky {
+    position: static;
+    height: auto;
+    padding: 18vh 24px;
+    overflow: visible;
+  }
+  html.no-anim .ov-hero { position: relative; top: 0; }
+  html.no-anim .ov-progress,
+  html.no-anim .ov-chip-scroll,
+  html.no-anim .play-chip { display: none; }
+  html.no-anim .ov-chip-next { opacity: 1; visibility: visible; }
+
   @media (prefers-reduced-motion: reduce) {
     .demo-item { transition: none; }
+    .ov-progress { transition: none; }
+    .ov-close { transition: none; }
   }
 </style>
 </head>
 <body>
 
-<main class="work">
+<main class="work" id="workMain">
   <header class="work-head">
     <p class="work-kicker">The Standard</p>
     <p class="work-intro">Never the same twice.</p>
@@ -149,82 +489,182 @@
   <div class="face"></div>
 </div>
 
+<!-- ============ project overlay — one instance, re-rendered per demo ============ -->
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="ovTitle" hidden>
+  <button class="ov-close" id="ovClose" type="button" aria-label="Close">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true">
+      <line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line>
+    </svg>
+  </button>
+  <div class="ov-scroll" id="ovScroll">
+    <div id="ovContent">
+      <section class="ov-hero" id="ovHero" tabindex="0" role="link">
+        <div class="ov-hero-media" id="ovHeroMedia"></div>
+      </section>
+      <div class="ov-sheet">
+        <section class="ov-desc">
+          <h2 class="ov-title" id="ovTitle"></h2>
+          <div class="ov-desc-col">
+            <p class="ov-text" id="ovText"></p>
+            <a class="ov-see" id="ovSee" target="_blank" rel="noopener">see the demo&nbsp;&nbsp;•</a>
+          </div>
+        </section>
+        <section class="ov-gallery" id="ovGallery"></section>
+      </div>
+      <section class="ov-next-wrap" id="ovNextWrap">
+        <div class="ov-next-sticky" id="ovNextSticky">
+          <a class="ov-back" id="ovBack" href="#">back to the list</a>
+          <button class="ov-next-card" id="ovNextCard" type="button">
+            <span class="ov-next-media" id="ovNextMedia"></span>
+            <span class="ov-chip ov-chip-scroll" aria-hidden="true">keep scrolling !</span>
+            <span class="ov-chip ov-chip-next" aria-hidden="true">next up...</span>
+          </button>
+          <p class="ov-next-title" id="ovNextTitle"></p>
+        </div>
+      </section>
+    </div>
+  </div>
+  <div class="ov-progress" id="ovProgress" aria-hidden="true"><span id="ovProgressFill"></span></div>
+  <div class="ov-wash" id="ovWash" aria-hidden="true"></div>
+</div>
+
+<div class="play-chip" id="playChip" aria-hidden="true">play !</div>
+
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
 <script>
   // ---- Config: the only thing you edit. -------------------------------
-  // status "live"  → clickable, opens url in a new tab
-  // status "soon"  → hover/preview only, no click
-  // image null     → generated placeholder; set a path to use a real image
+  // Every item opens the project overlay. url present → the hero and the
+  // "see the demo •" button open it in a new tab; url null → no outbound
+  // link, overlay only. image/heroImage/gallery null → generated
+  // placeholders. Real content = editing config lines only.
+  const FALLBACK_DESC = "A booking-first demo clinic by Splendessa."; // safety net for a demo added without a description
   const demos = [
-    { name: "Velora",                 status: "live", url: "[URL-VELORA]", image: null },
-    { name: "Lumina",                 status: "live", url: "[URL-LUMINA]", image: null },
-    { name: "Maelis",                 status: "live", url: "[URL-MAELIS]", image: null },
-    { name: "Dawn",                   status: "soon", url: null, image: null },
-    { name: "Muse",                   status: "soon", url: null, image: null },
-    { name: "Ember",                  status: "soon", url: null, image: null },
-    { name: "Golden Hour",            status: "soon", url: null, image: null },
-    { name: "Bare Beauty",            status: "soon", url: null, image: null },
-    { name: "Where Time Softens",     status: "soon", url: null, image: null },
-    { name: "The Face You Wake With", status: "soon", url: null, image: null },
+    { name: "Velora",                 status: "live", url: "[URL-VELORA]", image: null, heroImage: null, gallery: null,
+      description: "Velora is the AI MedSpa Engine — a clinic built around one idea: no client left waiting. Instant booking, automated follow-up, a site that works the night shift." },
+    { name: "Lumina",                 status: "live", url: "[URL-LUMINA]", image: null, heroImage: null, gallery: null,
+      description: "Lumina is the essential med spa landing, reduced to what converts. One page, one path, booked." },
+    { name: "Maelis",                 status: "live", url: "[URL-MAELIS]", image: null, heroImage: null, gallery: null,
+      description: "Maelis is the elite multi-service clinic — treatments, stories and booking woven into one editorial experience." },
+    { name: "Dawn",                   status: "soon", url: null, image: null, heroImage: null, gallery: null,
+      description: "Dawn is a clinic about starting over. Laser and resurfacing treatments framed as what they really are: your skin, beginning again." },
+    { name: "Muse",                   status: "soon", url: null, image: null, heroImage: null, gallery: null,
+      description: "Muse treats aesthetics as an art practice. A monochrome editorial clinic where every treatment reads like a piece in an exhibition." },
+    { name: "Ember",                  status: "soon", url: null, image: null, heroImage: null, gallery: null,
+      description: "Ember is warmth you can book. A luxury spa in terracotta and amber, built around the feeling that stays with you after you leave." },
+    { name: "Golden Hour",            status: "soon", url: null, image: null, heroImage: null, gallery: null,
+      description: "Golden Hour is a skincare clinic set in permanent perfect light. Facials and glow treatments designed around one promise: meet your best light." },
+    { name: "Bare Beauty",            status: "soon", url: null, image: null, heroImage: null, gallery: null,
+      description: "Bare Beauty is the anti-hype injectables clinic. Natural-look results, honest language, and a design stripped to what matters — less, done right." },
+    { name: "Where Time Softens",     status: "soon", url: null, image: null, heroImage: null, gallery: null,
+      description: "Where Time Softens is an anti-aging clinic with a different relationship to time. Nothing stops here — it just gets gentler." },
+    { name: "The Face You Wake With", status: "soon", url: null, image: null, heroImage: null, gallery: null,
+      description: "The Face You Wake With is a skin health clinic about the version of you before the mirror gets an opinion. Prevention first, honesty always." },
   ];
   // ---------------------------------------------------------------------
 
   (function () {
     const list = document.getElementById("demoList");
+    const workHead = document.querySelector(".work-head");
     const preview = document.getElementById("preview");
     const faces = preview.querySelectorAll(".face");
+    const mainEl = document.getElementById("workMain");
 
     const mqReduce = window.matchMedia("(prefers-reduced-motion: reduce)");
     const hasGsap = typeof window.gsap !== "undefined";
     const reduced = () => mqReduce.matches || !hasGsap;
 
-    // Build the list from config.
+    const slugOf = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    const nextOf = (i) => (i + 1) % demos.length;
+
+    function syncMotionClass() {
+      document.documentElement.classList.toggle("no-anim", reduced());
+    }
+    syncMotionClass();
+
+    const scroller = document.getElementById("ovScroll");
+    // Native scroll everywhere — the reference has no inertial smoothing.
+    function resetOvScroll() { scroller.scrollTop = 0; }
+
+    // ============ placeholders (deterministic, palette only) ============
+
+    function phLight(seed, name) {
+      const ph = document.createElement("div");
+      ph.className = "ph";
+      const angle = 115 + (seed * 37) % 90;
+      const rosePct = [0, 4, 8, 6][seed % 4];
+      const end = `color-mix(in srgb, var(--mist) ${100 - rosePct}%, var(--rose) ${rosePct}%)`;
+      ph.style.background = `linear-gradient(${angle}deg, #FFFFFF 0%, ${end} 100%)`;
+      const label = document.createElement("span");
+      label.className = "ph-label";
+      label.textContent = name;
+      ph.appendChild(label);
+      return ph;
+    }
+
+    function phDark(seed, name) {
+      const ph = document.createElement("div");
+      ph.className = "ov-hero-ph";
+      const angle = 130 + (seed * 41) % 80;
+      const rosePct = 8 + (seed % 3) * 3;
+      const end = `color-mix(in srgb, var(--ink) ${100 - rosePct}%, var(--rose) ${rosePct}%)`;
+      ph.style.background = `linear-gradient(${angle}deg, var(--ink) 20%, ${end} 100%)`;
+      const wrap = document.createElement("span");
+      wrap.className = "ov-hero-mark-wrap";
+      const mark = document.createElement("span");
+      mark.className = "ov-hero-mark";
+      mark.textContent = name;
+      wrap.appendChild(mark);
+      ph.appendChild(wrap);
+      return ph;
+    }
+
+    function mediaOrPh(src, seed, name) {
+      if (src) {
+        const img = document.createElement("img");
+        img.src = src;
+        img.alt = "";
+        img.loading = "lazy";
+        return img;
+      }
+      return phLight(seed, name);
+    }
+
+    // ============ the list — every row opens the overlay ============
+
     demos.forEach((demo, i) => {
       const li = document.createElement("li");
-      let el;
-      if (demo.status === "live" && demo.url) {
-        el = document.createElement("a");
-        el.href = demo.url;
-        el.target = "_blank";
-        el.rel = "noopener";
-      } else {
-        el = document.createElement("span");
-        el.tabIndex = 0;
-      }
+      const el = document.createElement("a");
+      el.href = "#work/" + slugOf(demo.name);
       el.className = "demo-item";
       el.textContent = demo.name;
       el.dataset.index = i;
       li.appendChild(el);
       list.appendChild(li);
     });
+    const rows = [...list.querySelectorAll("li")];
 
-    // Placeholder: deterministic gradient per index, name in the corner.
-    function buildContent(i) {
-      const demo = demos[i];
-      if (demo.image) {
-        const img = document.createElement("img");
-        img.src = demo.image;
-        img.alt = "";
-        return img;
+    // Rows fade in (no translate); they enter bright, then settle to dim.
+    function listEnter(delay = 0) {
+      if (reduced()) {
+        if (hasGsap) gsap.set([workHead, ...rows], { clearProps: "all" });
+        return;
       }
-      const ph = document.createElement("div");
-      ph.className = "ph";
-      const angle = 115 + (i * 37) % 90;
-      const rosePct = [0, 4, 8, 6][i % 4];
-      const end = `color-mix(in srgb, var(--mist) ${100 - rosePct}%, var(--rose) ${rosePct}%)`;
-      ph.style.background = `linear-gradient(${angle}deg, #FFFFFF 0%, ${end} 100%)`;
-      const label = document.createElement("span");
-      label.className = "ph-label";
-      label.textContent = demo.name;
-      ph.appendChild(label);
-      return ph;
+      const items = rows.map((li) => li.querySelector(".demo-item"));
+      list.classList.add("entering");
+      gsap.fromTo([workHead, ...rows], { autoAlpha: 0 },
+        { autoAlpha: 1, duration: 0.3, ease: "power1.out", stagger: 0.06, delay, overwrite: "auto" });
+      gsap.fromTo(items, { color: "#17161A" }, {
+        color: "#8A8A8E", duration: 0.25, ease: "power1.out", stagger: 0.06,
+        delay: delay + 0.2, clearProps: "color", overwrite: "auto",
+        onComplete() { list.classList.remove("entering"); },
+      });
     }
+    if (!reduced()) listEnter(0);
 
-    // ---- Cursor follow ------------------------------------------------
     let quickX, quickY;
     if (hasGsap) {
-      quickX = gsap.quickTo(preview, "x", { duration: 0.55, ease: "power3" });
-      quickY = gsap.quickTo(preview, "y", { duration: 0.55, ease: "power3" });
+      quickX = gsap.quickTo(preview, "x", { duration: 0.2, ease: "power3.out" });
+      quickY = gsap.quickTo(preview, "y", { duration: 0.2, ease: "power3.out" });
     }
 
     let mx = 0, my = 0;
@@ -264,7 +704,6 @@
       }
     }
 
-    // ---- Show / swap / hide -------------------------------------------
     function showFor(item, docked) {
       const i = +item.dataset.index;
       if (i === currentIndex && visible) return;
@@ -275,7 +714,7 @@
 
       const next = faces[1 - front];
       const prev = faces[front];
-      next.replaceChildren(buildContent(i));
+      next.replaceChildren(demos[i].image ? mediaOrPh(demos[i].image, i, demos[i].name) : phLight(i, demos[i].name));
       front = 1 - front;
 
       if (reduced()) {
@@ -284,26 +723,26 @@
         snapTo(itemTarget(item));
         preview.style.opacity = 1;
         preview.style.visibility = "visible";
-        if (hasGsap) gsap.set(preview, { scale: 1 });
         return;
       }
 
       if (!wasVisible) {
+        // First hover: fade in ~400ms, no scale.
         gsap.set(next, { opacity: 1 });
         gsap.set(prev, { opacity: 0 });
         snapTo(docked ? itemTarget(item) : cursorTarget());
-        gsap.set(preview, { scale: 0.9 });
-        gsap.to(preview, { autoAlpha: 1, scale: 1, duration: 0.35, ease: "power2.out", overwrite: "auto" });
+        gsap.set(preview, { scale: 1 });
+        gsap.to(preview, { autoAlpha: 1, duration: 0.4, ease: "power1.inOut", overwrite: "auto" });
       } else {
+        // Between rows: pure crossfade, both faces at scale 1, no movement.
         gsap.set(next, { opacity: 0 });
-        gsap.to(next, { opacity: 1, duration: 0.25, ease: "power1.out", overwrite: "auto" });
-        gsap.to(prev, { opacity: 0, duration: 0.25, ease: "power1.out", overwrite: "auto" });
-        gsap.fromTo(preview, { scale: 0.97 }, { scale: 1, duration: 0.3, ease: "power2.out", overwrite: "auto" });
+        gsap.to(next, { opacity: 1, duration: 0.35, ease: "power1.inOut", overwrite: "auto" });
+        gsap.to(prev, { opacity: 0, duration: 0.35, ease: "power1.inOut", overwrite: "auto" });
         if (docked) snapTo(itemTarget(item));
       }
     }
 
-    function hide() {
+    function hidePreview() {
       if (!visible) return;
       visible = false;
       currentIndex = -1;
@@ -311,14 +750,13 @@
         preview.style.opacity = 0;
         preview.style.visibility = "hidden";
       } else {
-        gsap.to(preview, { autoAlpha: 0, scale: 0.92, duration: 0.3, ease: "power2.out", overwrite: "auto" });
+        gsap.to(preview, { autoAlpha: 0, duration: 0.3, ease: "power1.inOut", overwrite: "auto" });
       }
     }
 
-    // ---- Events -------------------------------------------------------
     list.addEventListener("mouseover", (e) => {
       const item = e.target.closest(".demo-item");
-      if (!item) return;
+      if (!item) return; // between rows the preview never hides — it crossfades
       mx = e.clientX;
       my = e.clientY;
       showFor(item, reduced());
@@ -333,7 +771,7 @@
       quickY(t.y);
     });
 
-    list.addEventListener("mouseleave", hide);
+    list.addEventListener("mouseleave", hidePreview);
 
     list.addEventListener("focusin", (e) => {
       const item = e.target.closest(".demo-item");
@@ -342,16 +780,544 @@
     });
 
     list.addEventListener("focusout", (e) => {
-      if (!list.contains(e.relatedTarget)) hide();
+      if (!list.contains(e.relatedTarget)) hidePreview();
     });
 
-    // Reset cleanly if the motion preference flips mid-session.
+    // ============ overlay ============
+
+    const overlay = document.getElementById("overlay");
+    const content = document.getElementById("ovContent");
+    const ovBack = document.getElementById("ovBack");
+    const ovClose = document.getElementById("ovClose");
+    const ovHero = document.getElementById("ovHero");
+    const ovHeroMedia = document.getElementById("ovHeroMedia");
+    const ovTitle = document.getElementById("ovTitle");
+    const ovText = document.getElementById("ovText");
+    const ovSee = document.getElementById("ovSee");
+    const ovGallery = document.getElementById("ovGallery");
+    const ovNextWrap = document.getElementById("ovNextWrap");
+    const ovNextSticky = document.getElementById("ovNextSticky");
+    const ovNextCard = document.getElementById("ovNextCard");
+    const ovNextMedia = document.getElementById("ovNextMedia");
+    const ovNextTitle = document.getElementById("ovNextTitle");
+    const ovProgress = document.getElementById("ovProgress");
+    const ovProgressFill = document.getElementById("ovProgressFill");
+    const ovWash = document.getElementById("ovWash");
+    const ovSheet = overlay.querySelector(".ov-sheet");
+    const scrollChip = overlay.querySelector(".ov-chip-scroll");
+    const nextChip = overlay.querySelector(".ov-chip-next");
+    const playChip = document.getElementById("playChip");
+
+    let ovOpen = false;
+    let ovDemo = -1;
+    let openerEl = null;
+    let swapping = false;
+    let opening = false;
+    // Overscroll commit: wheel input at the scroller's absolute end feeds the
+    // bar; it decays ~120px/s when input stops; ~45% of the track commits.
+    // Overscroll-to-commit accumulator. Fires ONLY when the bar is completely
+    // full (acc reaches COMMIT_ACC). Per-event contribution is capped so a
+    // single hard fling can't fill it — the user has to keep pushing.
+    const COMMIT_ACC = 420, GAIN = 0.33, PER_EVENT_CAP = 42, DECAY = 120;
+    let acc = 0, lastInput = 0, pulseTween = null, atEnd = false;
+    // Next-up chips are reactive to the card's revealed fraction (change 6):
+    // they pop on the rising edge and hide when scrolled back below trigger.
+    let nextChipOn = false, scrollChipOn = false;
+
+    // Gallery frame-expansion reveal, driven from the scroll handler: the clip
+    // frame opens from a 12% inset while the zoomed inner image settles to 1.0.
+    let pendingFigs = [];
+    function checkFigReveals() {
+      if (!pendingFigs.length) return;
+      const vh = scroller.clientHeight;
+      pendingFigs = pendingFigs.filter((fig) => {
+        const r = fig.getBoundingClientRect();
+        // Anything at or above the trigger line reveals — including figures a
+        // fast scroll jumped straight past, so nothing is left stuck hidden.
+        if (r.top < vh * 0.85) {
+          gsap.to(fig, { clipPath: "inset(0% round 24px)", duration: 0.9, ease: "power2.out" });
+          gsap.to(fig.firstElementChild, { scale: 1, duration: 0.9, ease: "power2.out" });
+          return false;
+        }
+        return true;
+      });
+    }
+
+    function renderDemo(i) {
+      const d = demos[i];
+      ovDemo = i;
+
+      ovHeroMedia.replaceChildren(
+        d.heroImage ? mediaOrPh(d.heroImage, i, d.name) : phDark(i, d.name)
+      );
+      // "see the demo •" renders on every demo (identical look). Only its
+      // click is status-driven: url present → real link; url null → inert.
+      if (d.url) {
+        ovHero.classList.add("is-link");
+        ovHero.setAttribute("role", "link");
+        ovHero.tabIndex = 0;
+        ovHero.setAttribute("aria-label", d.name + " — open the live demo in a new tab");
+        ovSee.href = d.url;
+      } else {
+        ovHero.classList.remove("is-link");
+        ovHero.removeAttribute("role");
+        ovHero.tabIndex = -1;
+        ovHero.setAttribute("aria-label", d.name);
+        ovSee.removeAttribute("href");
+      }
+
+      ovTitle.textContent = d.name;
+      ovText.textContent = d.description || FALLBACK_DESC;
+
+      const shots = d.gallery && d.gallery.length ? d.gallery : [null, null, null];
+      pendingFigs = [];
+      ovGallery.replaceChildren(...shots.map((src, k) => {
+        const fig = document.createElement("figure");
+        fig.appendChild(mediaOrPh(src, i * 3 + k + 1, d.name));
+        if (!reduced()) {
+          gsap.set(fig, { clipPath: "inset(12% round 24px)" });
+          gsap.set(fig.firstElementChild, { scale: 1.08, transformOrigin: "center" });
+          pendingFigs.push(fig);
+        }
+        return fig;
+      }));
+
+      const n = nextOf(i);
+      const nd = demos[n];
+      ovNextMedia.replaceChildren(nd.image ? mediaOrPh(nd.image, n, nd.name) : phLight(n, nd.name));
+      ovNextTitle.textContent = nd.name;
+      ovNextCard.setAttribute("aria-label", "Next demo: " + nd.name);
+
+      resetNextUp();
+      setCloseVisible(true);
+    }
+
+    // × is a hero-only control: it fades away once the sheet takes over.
+    let closeShown = true;
+    function setCloseVisible(v) {
+      if (v === closeShown) return;
+      closeShown = v;
+      if (reduced()) {
+        ovClose.style.opacity = v ? 1 : 0;
+        ovClose.style.visibility = v ? "visible" : "hidden";
+      } else {
+        gsap.to(ovClose, { autoAlpha: v ? 1 : 0, duration: 0.25, ease: "power2.out", overwrite: "auto" });
+      }
+    }
+
+    function resetNextUp() {
+      acc = 0;
+      nextChipOn = false;
+      scrollChipOn = false;
+      if (pulseTween) { pulseTween.kill(); pulseTween = null; }
+      ovProgress.classList.remove("on");
+      ovProgressFill.style.transform = "scaleY(0)";
+      if (hasGsap) {
+        gsap.set(ovProgress, { clearProps: "opacity,visibility" });
+        gsap.set(ovNextCard, { clearProps: "transform" });
+        gsap.set(ovNextSticky, { clearProps: "transform,opacity,visibility" });
+        if (!reduced()) gsap.set([nextChip, scrollChip], { autoAlpha: 0, scale: 0.6 });
+        else gsap.set([nextChip, scrollChip], { clearProps: "opacity,visibility,transform" });
+      }
+    }
+
+    // Edge-triggered chip (change 6b/c/d): pops in (scale 0.6→1, back.out) on
+    // the rising edge, hides on the falling edge; "keep scrolling !" idle-pulses.
+    function toggleChip(el, on, isPulse, wasOn) {
+      if (on) {
+        gsap.fromTo(el, { autoAlpha: 0, scale: 0.6 }, {
+          autoAlpha: 1, scale: 1, duration: 0.2, ease: "back.out(2)", overwrite: "auto",
+          onComplete() {
+            if (isPulse) pulseTween = gsap.to(el, { scale: 1.035, duration: 1.1, yoyo: true, repeat: -1, ease: "sine.inOut" });
+          },
+        });
+      } else {
+        if (isPulse && pulseTween) { pulseTween.kill(); pulseTween = null; }
+        gsap.to(el, { autoAlpha: 0, scale: 0.6, duration: 0.15, ease: "power1.out", overwrite: "auto" });
+      }
+    }
+
+    function updateBar() {
+      const p = clamp(acc / COMMIT_ACC, 0, 1);
+      ovProgressFill.style.transform = `scaleY(${p})`;
+      ovProgress.classList.toggle("on", p > 0.002);
+      if (p >= 1 && !swapping) { // commit only when the bar is completely full
+        acc = 0;
+        ovProgress.classList.remove("on");
+        ovProgressFill.style.transform = "scaleY(0)";
+        swapTo(nextOf(ovDemo));
+      }
+    }
+
+    function heroMask() {
+      const mark = ovHeroMedia.querySelector(".ov-hero-mark");
+      if (mark && !reduced()) {
+        gsap.fromTo(mark, { yPercent: 115 }, { yPercent: 0, duration: 0.25, ease: "power2.out" });
+      }
+    }
+
+    // One-level pixelation snap for real hero images: a 32px-block canvas copy
+    // sits on top and is removed ~200ms into the reveal. Placeholder gradients
+    // have nothing to pixelate — skipped.
+    function pixelSnap() {
+      const img = ovHeroMedia.querySelector("img");
+      if (!img || !img.complete || !img.naturalWidth) return;
+      const c = document.createElement("canvas");
+      const w = Math.max(1, Math.round(ovHeroMedia.clientWidth / 32));
+      const h = Math.max(1, Math.round(ovHeroMedia.clientHeight / 32));
+      c.width = w;
+      c.height = h;
+      c.getContext("2d").drawImage(img, 0, 0, w, h);
+      c.style.cssText = "position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;z-index:2";
+      ovHeroMedia.appendChild(c);
+      setTimeout(() => c.remove(), 200);
+    }
+
+    // Measured hero reveal: mask expands from center (bottom-anchored feel via
+    // the +28px content drift) — 0→85% width sharp, 85→100% eased tail.
+    function playHeroReveal() {
+      const inner = ovHeroMedia.firstElementChild;
+      const tl = gsap.timeline();
+      tl.call(() => {
+        gsap.set(ovHeroMedia, { autoAlpha: 1, clipPath: "inset(0% 50% 0% 50%)" });
+        pixelSnap();
+      }, null, 0);
+      if (inner) tl.fromTo(inner, { y: 28 }, { y: 0, duration: 0.74, ease: "power2.out", clearProps: "y" }, 0);
+      tl.to(ovHeroMedia, { clipPath: "inset(0% 7.5% 0% 7.5%)", duration: 0.14, ease: "power2.in" }, 0);
+      tl.to(ovHeroMedia, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.6, ease: "power2.out" }, 0.14);
+      tl.call(heroMask, null, 0.14);
+      tl.call(() => gsap.set(ovHeroMedia, { clearProps: "clipPath,opacity,visibility" }), null, 0.78);
+    }
+
+    function pushDemo(i) {
+      history.pushState({ ov: slugOf(demos[i].name) }, "", "#work/" + slugOf(demos[i].name));
+    }
+
+    function lockPage() {
+      document.documentElement.classList.add("ov-lock");
+      if ("inert" in mainEl) mainEl.inert = true;
+      mainEl.setAttribute("aria-hidden", "true");
+    }
+    function unlockPage() {
+      document.documentElement.classList.remove("ov-lock");
+      if ("inert" in mainEl) mainEl.inert = false;
+      mainEl.removeAttribute("aria-hidden");
+    }
+
+    function showOverlayNow() {
+      overlay.hidden = false;
+      overlay.style.opacity = 1;
+      resetOvScroll();
+    }
+    function finishOpen(i) {
+      ovOpen = true;
+      opening = false;
+      ovClose.focus({ preventScroll: true });
+    }
+
+    // Open anatomy: exit in place → dark grid floor → masked hero reveal.
+    function openOverlay(i, { push = true, animate = true } = {}) {
+      if (opening) return;
+      renderDemo(i);
+      lockPage();
+
+      if (reduced() || !animate) {
+        showOverlayNow();
+        ovOpen = true;
+        ovClose.focus({ preventScroll: true });
+        if (push) pushDemo(i);
+        return;
+      }
+
+      opening = true;
+      const tl = gsap.timeline();
+
+      // a) EXIT — rows and preview fade in place; no slide, no transform.
+      tl.to([workHead, ...rows], { autoAlpha: 0, duration: 0.25, ease: "power1.out" }, 0);
+      tl.to(preview, { autoAlpha: 0, duration: 0.4, ease: "power1.out" }, 0);
+
+      // b) FLOOR — dark bg with the faint grid; media hidden. Hash updates here.
+      tl.call(() => {
+        visible = false;
+        currentIndex = -1;
+        gsap.set(ovHeroMedia, { autoAlpha: 0 });
+        showOverlayNow();
+        if (push) pushDemo(i);
+      }, null, 0.42);
+
+      // c+d) HERO REVEAL after a ~200ms hold.
+      tl.call(playHeroReveal, null, 0.62);
+      tl.call(() => finishOpen(i), null, 1.45);
+    }
+
+    // Close: content fades in place, brief floor beat, list re-enters bright.
+    function closeOverlay({ animate = true } = {}) {
+      if (!ovOpen) return;
+      ovOpen = false;
+      hideChip();
+
+      const finish = () => {
+        overlay.hidden = true;
+        unlockPage();
+        if (openerEl && document.contains(openerEl)) openerEl.focus({ preventScroll: true });
+      };
+
+      if (reduced() || !animate) {
+        finish();
+        listEnter(0);
+        return;
+      }
+
+      gsap.to(overlay, {
+        opacity: 0, duration: 0.55, ease: "power1.out",
+        onComplete() {
+          gsap.set(overlay, { clearProps: "opacity" });
+          finish();
+        },
+      });
+      listEnter(0.5);
+    }
+
+    // Demo swap: the next-up block rises UP and out from center; under a dark
+    // blur wash the content swaps and hard-resets to the top; then the whole
+    // new content sheet (hero + description + gallery) rises in from the BOTTOM
+    // as one unit and settles with a clean ease-out (no bounce).
+    function swapTo(i, { push = true } = {}) {
+      if (swapping || i === ovDemo) return;
+      if (reduced()) {
+        renderDemo(i);
+        resetOvScroll();
+        ovClose.focus({ preventScroll: true });
+        if (push) pushDemo(i);
+        return;
+      }
+      swapping = true;
+      if (pulseTween) { pulseTween.kill(); pulseTween = null; }
+      // 4c: freeze the scroller so leftover fling momentum can't carry the new
+      // demo down; it re-opens at the top when the transition finishes.
+      scroller.style.overflow = "hidden";
+      const tl = gsap.timeline({
+        onComplete() { swapping = false; scroller.style.overflow = ""; },
+      });
+      // 5) next-up block rises up and out; dark wash covers the cut.
+      tl.to(ovNextSticky, { y: -140, autoAlpha: 0, duration: 0.55, ease: "power2.in" }, 0);
+      tl.to(ovWash, { autoAlpha: 1, duration: 0.3, ease: "power1.out" }, 0.2);
+      tl.call(() => {
+        renderDemo(i);          // resets sticky/chips/card, re-clips gallery, new hero
+        resetOvScroll();         // 4c: new demo always starts at the very top
+        if (push) pushDemo(i);
+        gsap.set(ovNextSticky, { clearProps: "transform,opacity,visibility" });
+        gsap.set(ovHeroMedia, { clearProps: "transform" }); // drop leftover parallax
+        pixelSnap();
+        gsap.set([ovHero, ovSheet], { y: 160 }); // whole sheet staged below the fold
+      }, null, 0.55);
+      // The whole content sheet rises as one unit and settles — clean ease-out.
+      tl.to([ovHero, ovSheet], { y: 0, duration: 0.6, ease: "power2.out", clearProps: "transform" }, 0.6);
+      tl.to(ovWash, { autoAlpha: 0, duration: 0.45, ease: "power1.inOut" }, 0.62);
+      tl.to({}, { duration: 0.4 }, 0.6); // hold the timeline until the rise lands
+    }
+
+    // --- list → overlay ---
+    list.addEventListener("click", (e) => {
+      const item = e.target.closest("a.demo-item");
+      if (!item) return;
+      e.preventDefault();
+      openerEl = item;
+      openOverlay(+item.dataset.index);
+    });
+
+    // --- close: ×, back link, Esc — all close to the list ---
+    function backToList() {
+      closeOverlay();
+      history.replaceState(null, "", location.pathname + location.search);
+    }
+    ovBack.addEventListener("click", (e) => { e.preventDefault(); backToList(); });
+    ovClose.addEventListener("click", backToList);
+    // The × rotates 90° on hover of the button itself (pure CSS :hover).
+    document.addEventListener("keydown", (e) => {
+      if (!ovOpen) return;
+      if (e.key === "Escape") {
+        e.preventDefault();
+        backToList();
+        return;
+      }
+      if (e.key === "Tab") {
+        const els = [...overlay.querySelectorAll('a[href], button, [tabindex="0"]')]
+          .filter((el) => el.getClientRects().length && getComputedStyle(el).visibility !== "hidden");
+        if (!els.length) return;
+        const first = els[0], last = els[els.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    });
+
+    // --- hero: click / Enter opens the live demo; rose pill trails the cursor ---
+    function openLive() {
+      const d = demos[ovDemo];
+      if (d && d.url) window.open(d.url, "_blank", "noopener");
+    }
+    ovHero.addEventListener("click", () => {
+      if (chipOn && hasGsap) {
+        gsap.timeline({ overwrite: "auto" })
+          .to(playChip, { scale: 0.88, duration: 0.08, ease: "power2.in" })
+          .to(playChip, { scale: 1, duration: 0.12, ease: "back.out(1.7)" });
+      }
+      openLive();
+    });
+    ovHero.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") openLive();
+    });
+
+    // Heavy-lag follower: plain per-frame lerp (~0.12/frame → settles ~0.7s).
+    // Settles CENTERED under the cursor tip (as if the cursor presses it).
+    let chipOn = false;
+    let chipTx = 0, chipTy = 0, chipPx = 0, chipPy = 0;
+    // Pill sits ABOVE the cursor: its bottom edge meets the cursor tip.
+    const chipTX = (cx) => cx - playChip.offsetWidth / 2;
+    const chipTY = (cy) => cy - playChip.offsetHeight;
+    if (hasGsap) {
+      gsap.ticker.add(() => {
+        if (!chipOn) return;
+        chipPx += (chipTx - chipPx) * 0.075; // heavier lag → trails longer
+        chipPy += (chipTy - chipPy) * 0.075;
+        gsap.set(playChip, { x: chipPx, y: chipPy });
+      });
+    }
+    function hideChip() {
+      if (!chipOn) return;
+      chipOn = false;
+      if (hasGsap) gsap.to(playChip, { autoAlpha: 0, scale: 0.9, duration: 0.18, overwrite: "auto" });
+    }
+    ovHero.addEventListener("mouseenter", (e) => {
+      if (reduced() || !window.matchMedia("(hover: hover)").matches) return;
+      chipOn = true;
+      chipTx = chipPx = chipTX(e.clientX);
+      chipTy = chipPy = chipTY(e.clientY);
+      gsap.set(playChip, { x: chipPx, y: chipPy, scale: 1 });
+      gsap.to(playChip, { autoAlpha: 1, duration: 0.06, overwrite: "auto" }); // materialize ≤70ms
+    });
+    ovHero.addEventListener("mousemove", (e) => {
+      if (!chipOn) return;
+      chipTx = chipTX(e.clientX);
+      chipTy = chipTY(e.clientY);
+    });
+    ovHero.addEventListener("mouseleave", hideChip);
+
+    // "see the demo •" scales up on hover (CSS). Its click is inert without a
+    // url — guard against navigating to "#".
+    ovSee.addEventListener("click", (e) => { if (!ovSee.hasAttribute("href")) e.preventDefault(); });
+
+    // --- scroll: reveals, ×-fade, hero counter-parallax, chips-in-view ---
+    let heroParallax = hasGsap ? gsap.quickSetter(ovHeroMedia, "yPercent") : null;
+    let scrollQueued = false;
+    scroller.addEventListener("scroll", () => {
+      if (scrollQueued) return;
+      scrollQueued = true;
+      requestAnimationFrame(() => {
+        scrollQueued = false;
+        if (!ovOpen || reduced()) return;
+        const top = scroller.scrollTop;
+        const vh = scroller.clientHeight;
+        // Settled at-end state (4a): the accumulator may only charge once the
+        // scroller has actually come to rest at the bottom — so the single
+        // event that flings you TO the end never counts.
+        atEnd = top >= (scroller.scrollHeight - scroller.clientHeight) - 2;
+        checkFigReveals();
+        setCloseVisible(top < vh * 0.9);
+
+        // During a swap the hero transform is owned by the rise tween — don't
+        // let the counter-parallax fight it.
+        if (swapping) return;
+        if (heroParallax) heroParallax(-20 * clamp(top / vh, 0, 1));
+
+        // Change 6 — revealed fraction: how much of the (pinned) next-up card
+        // is uncovered by the receding white sheet. 0 = fully behind the sheet,
+        // 1 = fully exposed. This is what the eye actually sees, so the scrub
+        // and chip staging track the visible reveal, not raw scroll.
+        const cr = ovNextCard.getBoundingClientRect();
+        const sheetBot = ovSheet.getBoundingClientRect().bottom;
+        const cardH = cr.height || 1;
+        const revealed = clamp((cr.bottom - sheetBot) / cardH, 0, 1);
+
+        // a) direct scrub: 0.85 as the card peeks → 1.0 fully in view (reverses
+        //    live scrolling up). The commit jump to 1.10 rides on top of this.
+        gsap.set(ovNextCard, { scale: 0.85 + 0.15 * revealed });
+
+        // b) "next up..." as the card starts entering; c) "keep scrolling !"
+        //    only when it's nearly fully in view. d) both hide below trigger.
+        const wantNext = revealed > 0.05;
+        const wantScroll = revealed > 0.9;
+        if (wantNext !== nextChipOn) { nextChipOn = wantNext; toggleChip(nextChip, wantNext, false); }
+        if (wantScroll !== scrollChipOn) { scrollChipOn = wantScroll; toggleChip(scrollChip, wantScroll, true); }
+      });
+    }, { passive: true });
+
+    // Overscroll accumulator: only charges on downward wheel input while the
+    // scroller is already pinned at its absolute end (4a), and each event's
+    // contribution is capped so a fling can't fill it in one flick (4b).
+    scroller.addEventListener("wheel", (e) => {
+      if (!ovOpen || reduced() || swapping) return;
+      if (e.deltaY <= 0) return; // scrolling up never charges
+      // Must already be settled at the bottom — a fling that only now reaches
+      // the end doesn't charge (its scroll hasn't settled into atEnd yet).
+      if (!atEnd) return;
+      acc = Math.min(COMMIT_ACC, acc + Math.min(e.deltaY * GAIN, PER_EVENT_CAP));
+      lastInput = performance.now();
+      updateBar();
+    }, { passive: true });
+
+    // No memory: the bar decays ~120px/s whenever input pauses.
+    if (hasGsap) {
+      gsap.ticker.add((time, deltaMs) => {
+        if (!ovOpen || reduced() || swapping) return;
+        if (acc > 0 && performance.now() - lastInput > 100) {
+          acc = Math.max(0, acc - DECAY * (deltaMs / 1000));
+          updateBar();
+        }
+      });
+    }
+
+    ovNextCard.addEventListener("click", () => swapTo(nextOf(ovDemo)));
+
+    // --- hash / history ---
+    function demoFromHash() {
+      const m = location.hash.match(/^#work\/(.+)$/);
+      if (!m) return -1;
+      return demos.findIndex((d) => slugOf(d.name) === m[1]);
+    }
+
+    addEventListener("popstate", (e) => {
+      const i = e.state && e.state.ov
+        ? demos.findIndex((d) => slugOf(d.name) === e.state.ov)
+        : demoFromHash();
+      if (i >= 0) {
+        if (ovOpen) swapTo(i, { push: false });
+        else openOverlay(i, { push: false });
+      } else {
+        closeOverlay();
+      }
+    });
+
+    // Deep-load: #work/<slug> opens that demo directly, no animation.
+    const initial = demoFromHash();
+    if (initial >= 0) {
+      history.replaceState({ ov: slugOf(demos[initial].name) }, "", location.hash);
+      openOverlay(initial, { push: false, animate: false });
+    }
+
     mqReduce.addEventListener("change", () => {
-      if (hasGsap) gsap.killTweensOf([preview, ...faces]);
+      syncMotionClass();
+      if (hasGsap) gsap.killTweensOf([preview, playChip, ...faces]);
       preview.style.opacity = 0;
       preview.style.visibility = "hidden";
       visible = false;
       currentIndex = -1;
+      hideChip();
     });
   })();
 </script>

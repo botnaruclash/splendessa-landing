@@ -765,13 +765,27 @@ html.js .diagnosis .phone-unit-right[data-reveal] { transition-delay: 0.24s; }
   color: var(--muted);
 }
 
+/* Ported 1:1 from prototypes/prototype-demolist.html. Token mapping into the
+   site palette: prototype --paper→--white, --dim→--grey-1, --mist→--grey-2;
+   --ink and --rose already exist. Rose appears only on the play pill. The
+   whole overlay is a fixed modal (z:100+) above the statusbar (z:40); it locks
+   the page via html.ov-lock and runs its own internal scroller (js/main.js). */
+
+/* Root scroll lock while the overlay is open (freezes the clock scrubber). */
+html.ov-lock { overflow: hidden; }
+
 .demo-list {
   list-style: none;
+  text-align: center;
+  position: relative; /* z:2 over the preview (z:1) — titles render on top */
+  z-index: 2;
 }
 .demo-list li {
   line-height: 1.06;
   padding: 0.14em 0;
 }
+/* Comet hover: instant in (~80ms), slow decay out (~550ms) — moving down the
+   list leaves a fading trail. Siblings recede to 70% in ~230ms. */
 .demo-item {
   display: inline-block;
   font-size: clamp(1.9rem, 6.5vw, 4.8rem);
@@ -779,26 +793,29 @@ html.js .diagnosis .phone-unit-right[data-reveal] { transition-delay: 0.24s; }
   letter-spacing: -0.025em;
   text-decoration: none;
   text-wrap: balance;
-  color: var(--grey-1); /* dimmed default — hover/focus lifts to full contrast */
-  transition: color 0.3s ease;
+  color: var(--grey-1);
+  cursor: pointer;
+  transition: color 0.55s ease, opacity 0.23s ease;
 }
 .demo-item:hover,
 .demo-item:focus-visible {
-  color: var(--fg);
-  transition-duration: 0.12s;
+  color: var(--ink);
+  transition-duration: 0.08s, 0.23s;
 }
-.demo-item:focus-visible { border-radius: 4px; }
-a.demo-item { cursor: pointer; }
-span.demo-item { cursor: default; } /* "soon" rows: hover + preview, no click */
+.demo-list:hover .demo-item:not(:hover) { opacity: 0.7; }
+.demo-list.entering .demo-item { transition: none; } /* GSAP owns colors on enter */
+.demo-item:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 6px;
+  border-radius: 4px;
+}
 
-/* The floating preview. Fixed-position, cursor-driven (js/main.js initDemoList);
-   interior colors are unconditional like the hero's white cards — it never
-   theme-flips. Sits below the statusbar (z:40). */
-.demo-preview {
+/* Floating hover preview — sits BEHIND the list titles. */
+.preview {
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 30;
+  z-index: 1;
   width: min(320px, 42vw);
   aspect-ratio: 16 / 10;
   border-radius: 14px;
@@ -810,15 +827,11 @@ span.demo-item { cursor: default; } /* "soon" rows: hover + preview, no click */
   visibility: hidden;
   will-change: transform;
 }
-.demo-preview .face { position: absolute; inset: 0; }
-.demo-preview .face img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.demo-ph { position: absolute; inset: 0; }
-.demo-ph-label {
+.preview .face,
+.ov-next-media .face { position: absolute; inset: 0; }
+.face img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.ph { position: absolute; inset: 0; }
+.ph-label {
   position: absolute;
   left: 16px;
   bottom: 13px;
@@ -826,7 +839,275 @@ span.demo-item { cursor: default; } /* "soon" rows: hover + preview, no click */
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--charcoal);
+  color: var(--ink);
+}
+
+/* ================= OVERLAY ================= */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--white);
+}
+.ov-scroll { height: 100%; overflow-y: auto; overscroll-behavior: contain; }
+
+/* Lives in the next-up end screen, above the card. */
+.ov-back {
+  display: inline-block;
+  margin-bottom: 34px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  color: #FFFFFF;
+  padding: 6px 12px;
+}
+.ov-back:hover { text-decoration: underline; text-underline-offset: 3px; }
+.ov-back:focus-visible { outline-color: #FFFFFF; }
+
+/* Round × close, top-right — hero-only control, fades once scrolled past.
+   Rotates 90° on hover of the button itself (:hover). */
+.ov-close {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 110;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--white);
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(23, 22, 26, 0.22);
+  transform: rotate(0deg);
+  transform-origin: center center;
+  transition: transform 0.25s ease-out;
+}
+.ov-close svg { display: block; width: 32px; height: 32px; }
+.ov-close:hover { transform: rotate(90deg); }
+
+/* --- hero: pinned, dark floor with a faint 34px grid under the media --- */
+.ov-hero {
+  display: block;
+  position: sticky;
+  top: 10px;
+  z-index: 1;
+  margin: 10px;
+  height: calc(100svh - 20px);
+  border-radius: 18px;
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 34px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 34px),
+    var(--ink);
+}
+.ov-hero.is-link { cursor: pointer; }
+.ov-hero:focus-visible { outline-offset: 2px; }
+.ov-hero-media { position: absolute; inset: 0; will-change: transform; }
+.ov-hero-ph { position: absolute; inset: 0; display: grid; place-items: center; }
+.ov-hero-mark-wrap { overflow: hidden; }
+.ov-hero-mark {
+  display: block;
+  font-size: clamp(2.5rem, 7vw, 6rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--white);
+}
+
+/* Cursor pill over the hero — the page's single rose moment. ~88×40. */
+.play-chip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 120;
+  width: 88px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  background: var(--rose);
+  color: #FFFFFF;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 999px;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  will-change: transform;
+}
+
+/* --- white sheet (description + gallery) slides over the pinned hero --- */
+.ov-sheet { position: relative; z-index: 3; background: var(--white); }
+.ov-desc {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: clamp(2rem, 5vw, 5rem);
+  align-items: start;
+  padding: clamp(4.5rem, 12vh, 8rem) clamp(1.5rem, 6vw, 6rem);
+}
+.ov-title {
+  font-size: clamp(2.4rem, 6vw, 4.5rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+}
+.ov-text { font-size: 17px; line-height: 1.65; max-width: 34ch; padding-top: 0.6em; }
+
+/* "see the demo •" — dark pill. Simple scale-up on hover. */
+.ov-see {
+  display: inline-block;
+  margin-top: 2.2rem;
+  padding: 15px 28px;
+  background: var(--ink);
+  color: #FFFFFF;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transform-origin: center;
+  transition: transform 0.2s ease-out;
+}
+.ov-see:hover,
+.ov-see:focus-visible { transform: scale(1.06); }
+.ov-see:focus-visible { outline-offset: 3px; }
+
+.ov-gallery {
+  display: flex;
+  flex-direction: column;
+  padding: 0 clamp(1.5rem, 6vw, 6rem) clamp(4rem, 12vh, 8rem);
+}
+.ov-gallery figure {
+  position: relative;
+  width: min(600px, 62vw);
+  aspect-ratio: 16 / 10;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 18px 60px rgba(23, 22, 26, 0.14), 0 2px 10px rgba(23, 22, 26, 0.07);
+  margin-bottom: clamp(3rem, 10vh, 7rem);
+}
+.ov-gallery figure:nth-child(odd) { align-self: flex-start; }
+.ov-gallery figure:nth-child(even) { align-self: flex-end; }
+.ov-gallery figure:last-child { margin-bottom: 0; }
+.ov-gallery figure > * { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ov-gallery figure img { object-fit: cover; }
+
+/* --- next up: curtain runway (one viewport tucked under the sheet). --- */
+.ov-next-wrap {
+  position: relative;
+  z-index: 2;
+  height: 200vh;
+  margin-top: -100vh;
+  background: var(--ink);
+}
+.ov-next-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+.ov-next-card {
+  position: relative;
+  width: min(640px, 78vw);
+  aspect-ratio: 16 / 10;
+  border: 0;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+}
+.ov-next-card:focus-visible { outline: 2px solid #FFFFFF; outline-offset: 6px; border-radius: 18px; }
+.ov-next-media { position: absolute; inset: 0; border-radius: 18px; overflow: hidden; display: block; }
+.ov-chip {
+  position: absolute;
+  z-index: 2;
+  background: var(--white);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+  padding: 11px 20px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.ov-chip-next { left: -18px; bottom: -14px; transform: rotate(-7deg); }
+.ov-chip-scroll { right: -22px; top: -16px; transform: rotate(5deg); opacity: 0; visibility: hidden; }
+.ov-next-title {
+  margin-top: 34px;
+  color: var(--white);
+  font-size: clamp(1.3rem, 2.6vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* ONE overscroll bar, right edge — center-anchored, grows both ways. */
+.ov-progress {
+  position: fixed;
+  right: 20px;
+  top: 25vh;
+  height: 50vh;
+  width: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.18);
+  z-index: 110;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+.ov-progress.on { opacity: 1; }
+.ov-progress span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+  background: #FFFFFF;
+  transform: scaleY(0);
+  transform-origin: center;
+}
+
+/* Dark full-screen wash during a commit swap (near-black + blur). */
+.ov-wash {
+  position: fixed;
+  inset: 0;
+  z-index: 105;
+  background: #050505;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+@media (max-width: 700px) {
+  .ov-desc { grid-template-columns: 1fr; }
+  .ov-text { padding-top: 0; }
+  .ov-gallery figure { width: min(600px, 86vw); }
+  .ov-next-card { width: 84vw; }
+  .ov-chip { font-size: 13px; padding: 9px 15px; }
+  .ov-chip-scroll { right: -8px; }
+  .ov-chip-next { left: -6px; }
+}
+
+/* Reduced motion (or no GSAP): html.no-anim is set by js/main.js. */
+html.no-anim .ov-next-wrap { height: auto; margin-top: 0; }
+html.no-anim .ov-next-sticky { position: static; height: auto; padding: 18vh 24px; overflow: visible; }
+html.no-anim .ov-hero { position: relative; top: 0; }
+html.no-anim .ov-progress,
+html.no-anim .ov-chip-scroll,
+html.no-anim .play-chip { display: none; }
+html.no-anim .ov-chip-next { opacity: 1; visibility: visible; }
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-item { transition: none; }
+  .ov-progress { transition: none; }
+  .ov-close { transition: none; }
 }
 
 /* ---------- 03B / The Standard ---------- */

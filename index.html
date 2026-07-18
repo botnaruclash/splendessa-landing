@@ -221,23 +221,18 @@
       </div>
     </section>
 
-    <!-- ============ [ 03A / THE WORK ] — white: typographic demo list ============ -->
+    <!-- ============ [ 03A / THE WORK ] — white: typographic demo list + overlay ============ -->
+    <!-- Section 03 ported 1:1 from prototypes/prototype-demolist.html. The list
+         and the full project overlay are built and driven by initDemoList in
+         js/main.js — to change a demo, edit its config line there. The intro
+         (kicker + line) is the real section title; the list-enter animation
+         (js) owns its reveal, so no data-reveal here. -->
     <section class="worklist" id="work" data-zone="light">
-      <header class="worklist-head" data-reveal>
+      <header class="worklist-head">
         <p class="worklist-kicker">The Standard</p>
         <p class="worklist-intro">Never the same twice.</p>
       </header>
-
-      <!-- Built entirely from the demos config in js/main.js (initDemoList) —
-           to change a demo, edit its config line there, never this markup. -->
-      <ul class="demo-list" id="demoList" data-reveal></ul>
-
-      <!-- Single reused hover preview card. Follows the cursor on fine pointers;
-           docks beside the item under keyboard focus or reduced motion. -->
-      <div class="demo-preview" id="demoPreview" aria-hidden="true">
-        <div class="face"></div>
-        <div class="face"></div>
-      </div>
+      <ul class="demo-list" id="demoList"></ul>
     </section>
 
     <!-- ============ [ 03B / THE STANDARD ] — white ============ -->
@@ -329,6 +324,56 @@
     </section>
 
   </main>
+
+  <!-- ============ Section 03 overlay chrome (ported from the prototype) ============
+       The floating hover preview, the full project overlay (one instance,
+       re-rendered per demo by initDemoList), and the cursor play pill. Kept as
+       body-level siblings so the overlay's fixed modal (z:100+) covers the
+       statusbar (z:40) and the whole page when open. -->
+  <div class="preview" id="preview" aria-hidden="true">
+    <div class="face"></div>
+    <div class="face"></div>
+  </div>
+
+  <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="ovTitle" hidden>
+    <button class="ov-close" id="ovClose" type="button" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true">
+        <line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line>
+      </svg>
+    </button>
+    <div class="ov-scroll" id="ovScroll">
+      <div id="ovContent">
+        <section class="ov-hero" id="ovHero" tabindex="0" role="link">
+          <div class="ov-hero-media" id="ovHeroMedia"></div>
+        </section>
+        <div class="ov-sheet">
+          <section class="ov-desc">
+            <h2 class="ov-title" id="ovTitle"></h2>
+            <div class="ov-desc-col">
+              <p class="ov-text" id="ovText"></p>
+              <a class="ov-see" id="ovSee" target="_blank" rel="noopener">see the demo&nbsp;&nbsp;•</a>
+            </div>
+          </section>
+          <section class="ov-gallery" id="ovGallery"></section>
+        </div>
+        <section class="ov-next-wrap" id="ovNextWrap">
+          <div class="ov-next-sticky" id="ovNextSticky">
+            <a class="ov-back" id="ovBack" href="#">back to the list</a>
+            <button class="ov-next-card" id="ovNextCard" type="button">
+              <span class="ov-next-media" id="ovNextMedia"></span>
+              <span class="ov-chip ov-chip-scroll" aria-hidden="true">keep scrolling !</span>
+              <span class="ov-chip ov-chip-next" aria-hidden="true">next up...</span>
+            </button>
+            <p class="ov-next-title" id="ovNextTitle"></p>
+          </div>
+        </section>
+      </div>
+    </div>
+    <div class="ov-progress" id="ovProgress" aria-hidden="true"><span id="ovProgressFill"></span></div>
+    <div class="ov-wash" id="ovWash" aria-hidden="true"></div>
+  </div>
+
+  <div class="play-chip" id="playChip" aria-hidden="true">play !</div>
 
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
