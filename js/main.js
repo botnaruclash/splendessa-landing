@@ -4,8 +4,7 @@
 
 "use strict";
 
-const VELORA_DEMO_URL = "https://velora.splendessa.com";
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxbn6_WE5TwF0r12qE1k4s6MgwuoQH708js2exDXPyLCkOuCNy2tYpJzIN-__i5Ks3REw/exec";
+const APPS_SCRIPT_URL ="https://script.google.com/macros/s/AKfycbxbn6_WE5TwF0r12qE1k4s6MgwuoQH708js2exDXPyLCkOuCNy2tYpJzIN-__i5Ks3REw/exec";
 const ITI_VERSION = "29.1.2"; // intl-tel-input CDN build, lazy-loaded near Section 04
 
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -1151,13 +1150,4 @@ if (reducedMotion) {
       formError.hidden = false;
     }
   });
-})();
-
-/* Demo link target (03B CTA) — opens the live Velora demo in a new tab. */
-(function initDemoLink() {
-  const demo = document.getElementById("demo-link");
-  if (!demo) return;
-  demo.href = VELORA_DEMO_URL;
-  demo.target = "_blank";
-  demo.rel = "noopener";
 })();

@@ -240,31 +240,32 @@
       <h2 data-reveal>The 10 PM Standard.</h2>
       <p class="section-sub" data-reveal>Velora — a clinic that doesn't exist, running the system yours should.</p>
 
-      <div class="standard-body">
-        <!-- Same Velora asset as the slider's "after" pane (spec: dissected here). -->
-        <div class="velora-locked" data-reveal aria-hidden="true">
-          <img class="pane-img" src="assets/img/velora-after.webp" alt="" width="1280" height="690" loading="lazy">
-        </div>
-
-        <ol class="callouts">
-          <li data-reveal>
-            <p class="callout-title">① Looks like the prices.</p>
-            <p class="callout-desc">Design that lets you charge what you're worth.</p>
-          </li>
-          <li data-reveal>
-            <p class="callout-title">② Books while you sleep.</p>
-            <p class="callout-desc">Live calendar, instant confirmation. No DMs.</p>
-          </li>
-          <li data-reveal>
-            <p class="callout-title">③ Engineered for search.</p>
-            <p class="callout-desc">Sub-second load. Local search built into the code.</p>
-          </li>
-        </ol>
-      </div>
-
-      <p class="standard-cta-row" data-reveal>
-        <a class="cta cta-outline" id="demo-link" href="https://velora.splendessa.com" target="_blank" rel="noopener">Explore the live demo&nbsp;→</a>
-      </p>
+      <!-- Three benefit cards. The big number is a decorative anchor (aria-hidden);
+           the title carries the meaning for assistive tech. Rose activates on the
+           hovered card only (CSS :hover), the 3D tilt is added by initStandardTilt. -->
+      <ul class="std-cards" data-reveal>
+        <li class="std-card">
+          <span class="std-num" aria-hidden="true">1</span>
+          <div class="std-card-body">
+            <h3 class="std-card-title">Priced like you charge</h3>
+            <p class="std-card-desc">A design that justifies your rates before you say a word.</p>
+          </div>
+        </li>
+        <li class="std-card">
+          <span class="std-num" aria-hidden="true">2</span>
+          <div class="std-card-body">
+            <h3 class="std-card-title">Books while you sleep</h3>
+            <p class="std-card-desc">Live calendar, instant confirmation. Even at 10&nbsp;PM. No DMs.</p>
+          </div>
+        </li>
+        <li class="std-card">
+          <span class="std-num" aria-hidden="true">3</span>
+          <div class="std-card-body">
+            <h3 class="std-card-title">Found on Google</h3>
+            <p class="std-card-desc">Fast, local-optimized. When they search, you're the answer.</p>
+          </div>
+        </li>
+      </ul>
     </section>
 
     <!-- ============ [ 04 / THE ULTIMATUM ] — back to charcoal ============ -->
@@ -645,6 +646,29 @@
 
   measure();
   update();
+})();
+</script>
+<script>
+/* Section 04 cards — 3D magnetic tilt toward the cursor, with a smooth eased
+   return. GSAP drives the transform (rose activation is pure CSS :hover, so it
+   survives here regardless). Fully disabled under reduced motion / no GSAP —
+   cards then rest flat and legible, which is their static final state anyway. */
+(function initStandardTilt(){
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !window.gsap) return;
+  const MAX = 9; // degrees — subtle
+  document.querySelectorAll('.std-card').forEach((card) => {
+    const rx = gsap.quickTo(card, 'rotationX', { duration: 0.5, ease: 'power2.out' });
+    const ry = gsap.quickTo(card, 'rotationY', { duration: 0.5, ease: 'power2.out' });
+    card.addEventListener('pointermove', (e) => {
+      if (e.pointerType && e.pointerType !== 'mouse') return; // fine-pointer only
+      const r = card.getBoundingClientRect();
+      const nx = (e.clientX - r.left) / r.width - 0.5;   // -0.5 (left) .. 0.5 (right)
+      const ny = (e.clientY - r.top) / r.height - 0.5;   // -0.5 (top) .. 0.5 (bottom)
+      ry(nx * 2 * MAX);    // cursor right → right edge tilts toward viewer
+      rx(-ny * 2 * MAX);   // cursor down  → bottom edge tilts toward viewer
+    });
+    card.addEventListener('pointerleave', () => { rx(0); ry(0); });
+  });
 })();
 </script>
 </body>

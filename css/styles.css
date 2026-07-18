@@ -1145,21 +1145,65 @@ html.no-anim .ov-chip-next { opacity: 1; visibility: visible; }
   object-position: top center;
 }
 
-.standard-body {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: clamp(40px, 6vw, 96px);
-  align-items: center;
-  text-align: left;
-}
-.velora-locked { aspect-ratio: 16 / 11; overflow: hidden; }
-.callouts {
+/* Three benefit cards. perspective on the row gives the per-card 3D tilt its depth
+   (initStandardTilt); the tilt itself is JS + reduced-motion-gated, but the card's
+   border/number/shadow rose activation is pure CSS :hover, so it works without JS. */
+.std-cards {
   list-style: none;
   display: grid;
-  gap: 40px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(20px, 2.4vw, 32px);
+  width: 100%;
+  perspective: 1000px;
+  text-align: left;
 }
-.callout-title { font-weight: 700; font-size: 20px; }
-.callout-desc { margin-top: 6px; font-size: 16px; }
+.std-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 260px;
+  padding: clamp(26px, 2.6vw, 38px);
+  background: var(--white);
+  border: 1px solid var(--grey-2);
+  border-radius: 20px;
+  box-shadow: 0 18px 40px -26px rgba(23, 22, 26, 0.18);
+  transform-style: preserve-3d;
+  will-change: transform;
+  /* Only paint props transition here — the tilt transform is driven by GSAP. */
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.std-card:hover {
+  border-color: var(--rose);
+  box-shadow: 0 28px 56px -26px rgba(23, 22, 26, 0.24);
+}
+/* Big number as a design anchor, not a list marker: charcoal watermark that
+   lights up rose on the hovered card only (the section's single rose touchpoint). */
+.std-num {
+  position: absolute;
+  top: -0.14em;
+  left: 0.08em;
+  font-weight: 800;
+  font-size: clamp(90px, 9vw, 140px);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--charcoal);
+  opacity: 0.06;
+  user-select: none;
+  pointer-events: none;
+  transition: color 0.3s ease, opacity 0.3s ease;
+}
+.std-card:hover .std-num { color: var(--rose); opacity: 0.85; }
+/* Text sits above the watermark and in the card's lower band, clear of the number. */
+.std-card-body { position: relative; }
+.std-card-title { font-weight: 700; font-size: 20px; letter-spacing: -0.01em; }
+.std-card-desc {
+  margin-top: 8px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--grey-on-light);
+}
 
 /* ---------- 04 / The Ultimatum ---------- */
 
@@ -1254,8 +1298,12 @@ html.js [data-reveal].in {
   .phone-unit-left, .phone-unit-right { z-index: auto; }
   .phone-unit-left .phone-stage, .phone-unit-right .phone-stage { transform: none; filter: none; }
   .dynamic-island { display: none; }
-  .standard-body { grid-template-columns: 1fr; text-align: center; }
-  .callouts { justify-items: center; }
+}
+
+/* Cards: 3-across holds down to here (checked clean at 768), then stack full-width. */
+@media (max-width: 640px) {
+  .std-cards { grid-template-columns: 1fr; }
+  .std-card { min-height: 0; }
 }
 
 @media (max-width: 480px) {
