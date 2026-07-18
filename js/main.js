@@ -280,17 +280,13 @@ if (reducedMotion) {
     });
   }
   if (!reduced() && section) {
-    gsap.set([workHead, ...rows], { autoAlpha: 0 }); // hide until in view (no flash)
-    const enterIO = new IntersectionObserver((entries) => {
-      if (entries.some((e) => e.isIntersecting)) { enterIO.disconnect(); listEnter(0); }
-    }, { threshold: 0.15 });
-    enterIO.observe(section);
-  }
-
-  let quickX, quickY;
-  if (hasGsap) {
-    quickX = gsap.quickTo(preview, "x", { duration: 0.2, ease: "power3.out" });
-    quickY = gsap.quickTo(preview, "y", { duration: 0.2, ease: "power3.out" });
+    gsap.set([workHead, ...rows], { autoAlpha: 0 }); // pre-animation state until in view
+    if (window.ScrollTrigger) {
+      gsap.registerPlugin(ScrollTrigger);
+      ScrollTrigger.create({ trigger: section, start: "top 80%", once: true, onEnter: () => listEnter(0) });
+    } else {
+      listEnter(0); // no ScrollTrigger available → just play
+    }
   }
 
   let mx = 0, my = 0;
@@ -298,15 +294,20 @@ if (reducedMotion) {
   let currentIndex = -1;
   let front = 0;
 
+  // Heavy delayed lerp follow (same 0.075/frame feel as the play pill), with a
+  // fixed anchor so the cursor meets the image near its lower-left: the cursor
+  // sits at 40% from the image's left and 70% from its top, so the image sits
+  // up and to the right of the cursor.
+  const ANCHOR_X = 0.40, ANCHOR_Y = 0.70;
+  let pvTx = 0, pvTy = 0, pvX = 0, pvY = 0, pvDocked = false;
+
   const clamp = (v, min, max) => Math.max(min, Math.min(v, max));
 
   function cursorTarget() {
     const w = preview.offsetWidth, h = preview.offsetHeight;
-    let x = mx + 28;
-    if (x + w > innerWidth - 16) x = mx - w - 28;
     return {
-      x: clamp(x, 16, innerWidth - w - 16),
-      y: clamp(my - h / 2, 16, innerHeight - h - 16),
+      x: clamp(mx - ANCHOR_X * w, 16, innerWidth - w - 16),
+      y: clamp(my - ANCHOR_Y * h, 16, innerHeight - h - 16),
     };
   }
 
@@ -319,15 +320,22 @@ if (reducedMotion) {
     };
   }
 
-  function snapTo(t) {
-    if (hasGsap) {
-      quickX(t.x);
-      quickY(t.y);
-      if (quickX.tween) quickX.tween.progress(1);
-      if (quickY.tween) quickY.tween.progress(1);
-    } else {
-      preview.style.transform = `translate(${t.x}px, ${t.y}px)`;
-    }
+  // Snap the preview (and the lerp state) straight to a point — used on first
+  // appear and for the docked keyboard position, so it never flies in from 0,0.
+  function setPos(t) {
+    pvX = pvTx = t.x;
+    pvY = pvTy = t.y;
+    if (hasGsap) gsap.set(preview, { x: t.x, y: t.y });
+    else preview.style.transform = `translate(${t.x}px, ${t.y}px)`;
+  }
+
+  if (hasGsap) {
+    gsap.ticker.add(() => {
+      if (!visible || reduced() || pvDocked) return;
+      pvX += (pvTx - pvX) * 0.075;
+      pvY += (pvTy - pvY) * 0.075;
+      gsap.set(preview, { x: pvX, y: pvY });
+    });
   }
 
   function showFor(item, docked) {
@@ -337,6 +345,7 @@ if (reducedMotion) {
     const wasVisible = visible;
     currentIndex = i;
     visible = true;
+    pvDocked = docked;
 
     const next = faces[1 - front];
     const prev = faces[front];
@@ -346,7 +355,7 @@ if (reducedMotion) {
     if (reduced()) {
       next.style.opacity = 1;
       prev.style.opacity = 0;
-      snapTo(itemTarget(item));
+      setPos(docked ? itemTarget(item) : cursorTarget());
       preview.style.opacity = 1;
       preview.style.visibility = "visible";
       return;
@@ -356,15 +365,16 @@ if (reducedMotion) {
       // First hover: fade in ~400ms, no scale.
       gsap.set(next, { opacity: 1 });
       gsap.set(prev, { opacity: 0 });
-      snapTo(docked ? itemTarget(item) : cursorTarget());
+      setPos(docked ? itemTarget(item) : cursorTarget()); // snap to start (no fly-in)
       gsap.set(preview, { scale: 1 });
       gsap.to(preview, { autoAlpha: 1, duration: 0.4, ease: "power1.inOut", overwrite: "auto" });
     } else {
-      // Between rows: pure crossfade, both faces at scale 1, no movement.
+      // Between titles: pure crossfade, both faces at scale 1. The lerp keeps
+      // following the cursor (mousemove updates the target); docked snaps.
       gsap.set(next, { opacity: 0 });
       gsap.to(next, { opacity: 1, duration: 0.35, ease: "power1.inOut", overwrite: "auto" });
       gsap.to(prev, { opacity: 0, duration: 0.35, ease: "power1.inOut", overwrite: "auto" });
-      if (docked) snapTo(itemTarget(item));
+      if (docked) setPos(itemTarget(item));
     }
   }
 
@@ -376,28 +386,43 @@ if (reducedMotion) {
       preview.style.opacity = 0;
       preview.style.visibility = "hidden";
     } else {
-      gsap.to(preview, { autoAlpha: 0, duration: 0.3, ease: "power1.inOut", overwrite: "auto" });
+      gsap.to(preview, { autoAlpha: 0, duration: 0.15, ease: "power1.inOut", overwrite: "auto" });
     }
   }
 
+  // Hide when the cursor leaves a title into non-title space (any side). A tiny
+  // grace lets a fast transit between adjacent titles re-enter without hiding,
+  // so moving directly between titles still crossfades.
+  let hideTimer = null;
+  const cancelHide = () => { clearTimeout(hideTimer); hideTimer = null; };
+  const scheduleHide = () => { clearTimeout(hideTimer); hideTimer = setTimeout(hidePreview, 45); };
+
   list.addEventListener("mouseover", (e) => {
     const item = e.target.closest(".demo-item");
-    if (!item) return; // between rows the preview never hides — it crossfades
+    if (!item) return;
+    cancelHide();
     mx = e.clientX;
     my = e.clientY;
     showFor(item, reduced());
+  });
+
+  list.addEventListener("mouseout", (e) => {
+    if (!e.target.closest(".demo-item")) return; // only when leaving a title
+    const to = e.relatedTarget && e.relatedTarget.closest ? e.relatedTarget.closest(".demo-item") : null;
+    if (!to) scheduleHide(); // into non-title space → hide (unless we re-enter a title fast)
   });
 
   list.addEventListener("mousemove", (e) => {
     mx = e.clientX;
     my = e.clientY;
     if (!visible || reduced()) return;
+    pvDocked = false;
     const t = cursorTarget();
-    quickX(t.x);
-    quickY(t.y);
+    pvTx = t.x;
+    pvTy = t.y;
   });
 
-  list.addEventListener("mouseleave", hidePreview);
+  list.addEventListener("mouseleave", () => { cancelHide(); hidePreview(); });
 
   list.addEventListener("focusin", (e) => {
     const item = e.target.closest(".demo-item");
@@ -571,13 +596,6 @@ if (reducedMotion) {
     }
   }
 
-  function heroMask() {
-    const mark = ovHeroMedia.querySelector(".ov-hero-mark");
-    if (mark && !reduced()) {
-      gsap.fromTo(mark, { yPercent: 115 }, { yPercent: 0, duration: 0.25, ease: "power2.out" });
-    }
-  }
-
   // One-level pixelation snap for real hero images: a 32px-block canvas copy
   // sits on top and is removed ~200ms into the reveal. Placeholder gradients
   // have nothing to pixelate — skipped.
@@ -607,7 +625,8 @@ if (reducedMotion) {
     if (inner) tl.fromTo(inner, { y: 28 }, { y: 0, duration: 0.74, ease: "power2.out", clearProps: "y" }, 0);
     tl.to(ovHeroMedia, { clipPath: "inset(0% 7.5% 0% 7.5%)", duration: 0.14, ease: "power2.in" }, 0);
     tl.to(ovHeroMedia, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.6, ease: "power2.out" }, 0.14);
-    tl.call(heroMask, null, 0.14);
+    // No separate title entrance — the hero wordmark is simply present as the
+    // image mask reveals (avoids the double-animation flicker).
     tl.call(() => gsap.set(ovHeroMedia, { clearProps: "clipPath,opacity,visibility" }), null, 0.78);
   }
 
