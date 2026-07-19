@@ -136,6 +136,88 @@ main > section > * {
 }
 .cta-rose:hover { opacity: .92; }
 
+/* ===== Section 05 primary CTA — magnetic pull + rose glow + diagonal sheen.
+   Scoped to .cta-rose ONLY: the shared .cta base and the hero (a.cta#pCta) and
+   lead-form (.cta-outline) buttons are untouched. Cal.com wiring is preserved —
+   the magnetic JS (js/main.js initMagneticCta) only reads the pointer and writes
+   transform; it never touches the click path. ===== */
+.cta-rose {
+  position: relative;      /* containing block for the sheen pseudo-elements */
+  /* Re-declaring transition would drop the inherited theme-fade, so re-include
+     background/color/border-color, then add the glow and a short transform ease.
+     transform is written only by the magnetic JS, so 0.13s here is collision-free;
+     background-position (the sheen) lives on the pseudo-elements, not here. */
+  transition:
+    background-color var(--theme-fade) ease,
+    color var(--theme-fade) ease,
+    border-color var(--theme-fade) ease,
+    box-shadow .35s ease,
+    transform .13s ease;
+  /* Rest glow: a soft rose halo. Outer box-shadow, so the button keeps
+     overflow:visible and the glow is never clipped. */
+  box-shadow: 0 6px 22px -8px rgba(181, 83, 109, .55);
+  will-change: transform;
+}
+/* Glow intensifies on hover AND focus — box-shadow only. The :focus-visible
+   outline (below) is a separate property drawn on top and stays fully visible. */
+.cta-rose:hover,
+.cta-rose:focus-visible {
+  box-shadow:
+    0 10px 30px -8px rgba(181, 83, 109, .7),
+    0 0 20px 1px rgba(181, 83, 109, .4);
+}
+/* Sheen: two free pseudo-elements, each clipped to the pill by border-radius
+   (a background is clipped to its rounded border-box) and pointer-events:none so
+   clicks always reach the button. The band moves via background-position — the
+   pseudo itself stays put, so the pill clip never breaks. */
+.cta-rose::before,
+.cta-rose::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-size: 220% 100%;
+}
+/* ::before = hover / focus sweep, left→right. */
+.cta-rose::before {
+  background-image: linear-gradient(115deg,
+    transparent 38%, rgba(255, 255, 255, .30) 50%, transparent 62%);
+  background-position: -60% 0;         /* band parked off the left, invisible */
+  transition: background-position .75s ease;
+}
+.cta-rose:hover::before,
+.cta-rose:focus-visible::before {
+  background-position: 160% 0;          /* crosses to the right */
+}
+/* ::after = one gentle idle pass shortly after load. */
+.cta-rose::after {
+  background-image: linear-gradient(115deg,
+    transparent 40%, rgba(255, 255, 255, .22) 50%, transparent 60%);
+  background-position: -60% 0;
+  animation: cta-sheen 1.4s ease-in-out 1.2s 1 both;
+}
+@keyframes cta-sheen {
+  from { background-position: -60% 0; }
+  to   { background-position: 160% 0; }
+}
+/* Touch / no-hover: no cursor, so drop the sheen entirely (magnetic JS is also
+   guarded off). The static rest glow stays — it's not motion. */
+@media (hover: none) {
+  .cta-rose::before,
+  .cta-rose::after { display: none; animation: none; }
+}
+/* Reduced motion: no magnetic, no sweep, no idle pass — a static rose pill with
+   its rest glow. Bands parked off-screen. */
+@media (prefers-reduced-motion: reduce) {
+  .cta-rose { transition: none; transform: none; }
+  .cta-rose::before,
+  .cta-rose:hover::before,
+  .cta-rose:focus-visible::before { transition: none; background-position: -60% 0; }
+  .cta-rose::after { animation: none; background-position: -60% 0; }
+}
+
 :focus-visible {
   outline: 2px solid var(--fg);
   outline-offset: 4px;
