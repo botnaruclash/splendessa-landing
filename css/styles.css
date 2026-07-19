@@ -1171,6 +1171,11 @@ html.no-anim .ov-chip-next { opacity: 1; visibility: visible; }
   text-align: left;
 }
 .std-card {
+  /* Surface/border/number colours run through vars so they flip with the page's
+     scroll-driven light↔dark theme (body[data-theme] below). */
+  --card-surface: var(--white);
+  --card-border: var(--grey-2);
+  --num-color: var(--charcoal);
   position: relative;
   overflow: hidden;
   display: flex;
@@ -1178,16 +1183,25 @@ html.no-anim .ov-chip-next { opacity: 1; visibility: visible; }
   justify-content: flex-end;
   min-height: clamp(300px, 32vw, 384px);
   padding: clamp(30px, 3.2vw, 48px);
-  background: var(--white);
-  border: 1px solid var(--grey-2);
+  background: var(--card-surface);
+  border: 1px solid var(--card-border);
   border-radius: 22px;
   box-shadow: 0 20px 46px -26px rgba(23, 22, 26, 0.18);
   transform-style: preserve-3d;
   will-change: transform;
-  /* Shadow deepens via CSS on real hover; border-color is JS-driven (proximity glow),
-     so it is NOT transitioned here — a CSS transition would lag the per-frame updates.
-     Under reduced-motion / no-JS the CSS :hover border below just snaps, which is fine. */
-  transition: box-shadow 0.3s ease;
+  /* Background fades over --theme-fade in sync with the page; shadow deepens on hover.
+     border-color is JS-driven (proximity glow), so it's NOT transitioned — a CSS
+     transition would lag the per-frame updates (it swaps instantly on theme change,
+     subtle enough not to read). :hover below is the no-JS / reduced-motion fallback. */
+  transition: background-color var(--theme-fade) ease, box-shadow 0.3s ease;
+}
+/* Dark scroll state: the card becomes a raised charcoal surface — one step up from the
+   page's #17161A so it stays a distinct object — and its text/number/border flip to
+   light-on-dark. Background + text fade with the page; border/number swap instantly. */
+body[data-theme="dark"] .std-card {
+  --card-surface: #1E1D22;
+  --card-border: #3A383F;
+  --num-color: var(--white);
 }
 .std-card:hover {
   border-color: var(--rose);
@@ -1203,7 +1217,7 @@ html.no-anim .ov-chip-next { opacity: 1; visibility: visible; }
   font-size: clamp(128px, 13.5vw, 208px);
   line-height: 1;
   letter-spacing: -0.03em;
-  color: var(--charcoal);
+  color: var(--num-color); /* charcoal in light, white in dark — set via the card's theme var */
   opacity: 0.06;
   user-select: none;
   pointer-events: none;
@@ -1221,12 +1235,16 @@ html.no-anim .ov-chip-next { opacity: 1; visibility: visible; }
   font-size: clamp(27px, 2.3vw, 34px);
   letter-spacing: -0.02em;
   line-height: 1.1;
+  color: var(--fg); /* charcoal on the light card, white on the dark card */
+  transition: color var(--theme-fade) ease; /* fade in sync with the surface */
 }
 .std-card-desc {
   margin-top: 12px;
   font-size: clamp(17px, 1.35vw, 20px);
   line-height: 1.5;
-  color: var(--grey-on-light); /* stays light (inherited weight) — well under the title */
+  /* --muted follows the page theme (grey-on-light ↔ grey-on-dark) — readable on both
+     card surfaces, still one of the site's two greys. <p> already fades via the global rule. */
+  color: var(--muted);
 }
 /* Keeps "even at 10 PM." from splitting mid-phrase — it wraps to a new line as one unit. */
 .std-nowrap { white-space: nowrap; }

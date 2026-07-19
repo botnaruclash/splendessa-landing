@@ -662,7 +662,13 @@
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !window.gsap) return;
 
   const nums = cards.map((c) => c.querySelector('.std-num'));
-  const CHARCOAL = [23, 22, 26], ROSE = [181, 83, 109], GREY2 = [233, 231, 235];
+  // Resting bases the proximity glow eases FROM — matched to the CSS resting colours so
+  // there's no jump when the glow starts/ends. They flip with the page's light/dark theme.
+  const ROSE = [181, 83, 109];
+  const LIGHT = { num: [23, 22, 26], border: [233, 231, 235] };   // charcoal / --grey-2
+  const DARK  = { num: [255, 255, 255], border: [58, 56, 63] };   // white / #3A383F
+  const body = document.body;
+  let base = body.getAttribute('data-theme') === 'dark' ? DARK : LIGHT;
   const clamp01 = (v) => v < 0 ? 0 : v > 1 ? 1 : v;
   const lerp = (a, b, t) => a + (b - a) * t;
   const mix = (a, b, t) => 'rgb(' + Math.round(lerp(a[0], b[0], t)) + ',' + Math.round(lerp(a[1], b[1], t)) + ',' + Math.round(lerp(a[2], b[2], t)) + ')';
@@ -701,6 +707,13 @@
   const lastCT = cards.map(() => -1);
   const t0 = performance.now();
 
+  // Keep the glow's base colours in step with the page's scroll-driven theme flip.
+  // Resetting lastCT forces a re-mix on the next frame for any card mid-glow.
+  new MutationObserver(() => {
+    const b = body.getAttribute('data-theme') === 'dark' ? DARK : LIGHT;
+    if (b !== base) { base = b; for (let i = 0; i < lastCT.length; i++) lastCT[i] = -1; }
+  }).observe(body, { attributes: true, attributeFilter: ['data-theme'] });
+
   function frame(now) {
     if (!running) return;
     if (dirty) measure();
@@ -721,7 +734,7 @@
       if (ct !== lastCT[i]) {
         lastCT[i] = ct;
         if (ct <= 0) { nums[i].style.color = ''; cards[i].style.borderColor = ''; } // → CSS resting
-        else { nums[i].style.color = mix(CHARCOAL, ROSE, p); cards[i].style.borderColor = mix(GREY2, ROSE, p); }
+        else { nums[i].style.color = mix(base.num, ROSE, p); cards[i].style.borderColor = mix(base.border, ROSE, p); }
       }
     }
     requestAnimationFrame(frame);
