@@ -1321,6 +1321,87 @@ body[data-theme="dark"] .std-card {
   color: var(--white);
 }
 
+/* ---------- 06 / Footer — the close, permanently charcoal ---------- */
+
+.site-footer {
+  background: var(--charcoal);
+  color: var(--grey-on-dark);
+  font-family: var(--font-inter);
+  padding: clamp(40px, 6vh, 64px) var(--section-px);
+}
+.footer-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px 32px;
+  flex-wrap: wrap;
+}
+/* Hairline separating the two rows. */
+.footer-row-bottom {
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+.footer-mark {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--white);
+}
+.footer-social,
+.footer-legal {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.footer-social a,
+.footer-legal a {
+  color: var(--grey-on-dark);
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+  transition: color 0.25s ease; /* snappier than the 0.7s theme fade; neutralized under reduced-motion */
+}
+/* Rose is the single accent in the footer — social hover only. */
+.footer-social a:hover,
+.footer-social a:focus-visible {
+  color: var(--rose);
+}
+.footer-legal a:hover,
+.footer-legal a:focus-visible {
+  color: var(--white);
+}
+.footer-copy {
+  font-size: 14px;
+  color: var(--grey-on-dark);
+}
+/* Explicit white ring: the footer sits outside the theme system, so --fg is
+   whatever the last scrolled section left on <body>; pin it to white on the
+   permanent charcoal. */
+.site-footer a:focus-visible {
+  outline: 2px solid var(--white);
+  outline-offset: 4px;
+  border-radius: 3px;
+}
+@media (max-width: 640px) {
+  .footer-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .footer-social,
+  .footer-legal {
+    gap: 12px 20px;
+  }
+}
+
 /* ---------- Scroll reveals: fade + 14px rise, one motion idea ---------- */
 
 html.js [data-reveal] {
