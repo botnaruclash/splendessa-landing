@@ -1151,3 +1151,33 @@ if (reducedMotion) {
     }
   });
 })();
+
+/* =========================================================
+   Background grid — cursor rose-glow reveal. Writes --mx/--my
+   (px, viewport space) on the fixed .bg-grid layer so the CSS
+   radial mask brightens the grid around the pointer. Throttled
+   with a queued flag + requestAnimationFrame (same shape as the
+   overlay scroll handler) so pointermove never thrashes paint.
+   Self-contained — does not touch the theme observer, clock, or
+   the existing cursor trackers. Reduced motion: no listener at
+   all, so the CSS shows a static grid with no moving glow.
+   ========================================================= */
+(function initBgGrid() {
+  const grid = document.querySelector(".bg-grid");
+  if (!grid || reducedMotion) return;
+
+  let px = 0;
+  let py = 0;
+  let queued = false;
+  window.addEventListener("pointermove", (e) => {
+    px = e.clientX;
+    py = e.clientY;
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => {
+      queued = false;
+      grid.style.setProperty("--mx", px + "px");
+      grid.style.setProperty("--my", py + "px");
+    });
+  }, { passive: true });
+})();
