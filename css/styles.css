@@ -1343,6 +1343,10 @@ body[data-theme="dark"] .std-card {
   justify-content: space-between;
   gap: 18px 32px;
   flex-wrap: wrap;
+  /* Gutter lives on the row (not the footer/inner) so only the CONTENT insets —
+     the row's border-box stays full-width, keeping the divider (border-top on the
+     bottom row) and the dark band edge to edge. ~4vw ≈ 3–5%, 22px floor on mobile. */
+  padding-inline: clamp(22px, 4vw, 72px);
 }
 /* Hairline separating the two rows. */
 .footer-row-bottom {
@@ -1392,11 +1396,8 @@ body[data-theme="dark"] .std-card {
   border-radius: 3px;
 }
 @media (max-width: 640px) {
-  /* Mobile keeps a small safe gap from the physical screen edge (desktop stays flush). */
-  .site-footer {
-    padding-left: 20px;
-    padding-right: 20px;
-  }
+  /* Mobile edge gap now comes from .footer-row's padding-inline (22px floor), which
+     keeps the divider full-width; no padding on .site-footer (that would inset it). */
   .footer-row {
     flex-direction: column;
     align-items: flex-start;
