@@ -133,6 +133,11 @@ main > section > * {
   background: var(--rose);
   border-color: var(--rose);
   color: var(--white);
+  /* Scoped up from the base .cta 16px — this primary CTA reads a touch larger.
+     Padding nudged up so the pill stays balanced. Base .cta (hero + lead-form)
+     is untouched at 16px. */
+  font-size: 20px;
+  padding: 18px 40px;
 }
 .cta-rose:hover { opacity: .92; }
 
